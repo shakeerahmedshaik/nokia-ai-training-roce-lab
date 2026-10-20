@@ -1,0 +1,23 @@
+set / qos queues queue unicast-0 queue-index 0
+set / qos queues queue unicast-3 queue-index 3
+set / qos queues queue unicast-6 queue-index 6
+set / qos forwarding-classes forwarding-class fc0 output unicast-queue unicast-0
+set / qos forwarding-classes forwarding-class fc3 output unicast-queue unicast-3
+set / qos forwarding-classes forwarding-class fc6 output unicast-queue unicast-6
+
+set / qos classifiers dscp-policy ROCE dscp 26 forwarding-class fc3
+set / qos classifiers dscp-policy ROCE dscp 26 drop-probability low
+set / qos classifiers dscp-policy ROCE dscp 48 forwarding-class fc6
+set / qos classifiers dscp-policy ROCE dscp 48 drop-probability low
+
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 priority strict
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 0 input-type queue
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 0 queue-name unicast-6
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 1 input-type queue
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 1 queue-name unicast-3
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 2 input-type queue
+set / qos scheduler-policies scheduler-policy ROCE scheduler 0 input 2 queue-name unicast-0
+set / qos buffer-management queue-management-profile ROCE-ECN wred wred-slope all drop-probability all enable-ecn true slope-enabled true min-threshold-percent 5
+set / qos buffer-management queue-management-profile ROCE-ECN wred wred-slope all drop-probability all enable-ecn true slope-enabled true max-threshold-percent 20
+set / qos buffer-management queue-management-profile ROCE-ECN wred wred-slope all drop-probability all enable-ecn true slope-enabled true max-drop-probability-percent 100
+set / qos buffer-management buffer-allocation-profile ROCE queues queue unicast-3 maximum-burst-size 262144

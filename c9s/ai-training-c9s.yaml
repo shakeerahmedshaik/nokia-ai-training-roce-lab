@@ -1,0 +1,1019 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: ai-training
+    labels:
+        pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: ai-training-spine1-startup-config
+    namespace: ai-training
+data:
+  startup-config: |-
+    set / interface ethernet-1/1 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ipv4 address 192.168.11.1/31
+    set / interface ethernet-1/2 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ipv4 address 192.168.21.1/31
+    set / interface system0 admin-state enable
+    set / interface system0 subinterface 0 ipv4 admin-state enable
+    set / interface system0 subinterface 0 ipv4 address 10.0.0.1/32
+
+    set / network-instance default interface ethernet-1/1.0
+    set / network-instance default interface ethernet-1/2.0
+    set / network-instance default interface system0.0
+
+    set / routing-policy policy ACCEPT-ALL default-action policy-result accept
+
+    set / network-instance default protocols bgp admin-state enable
+    set / network-instance default protocols bgp autonomous-system 65100
+    set / network-instance default protocols bgp router-id 10.0.0.1
+    set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+    set / network-instance default protocols bgp afi-safi ipv4-unicast multipath ebgp maximum-paths 2
+    set / network-instance default protocols bgp group leaves import-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp group leaves export-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp neighbor 192.168.11.0 peer-group leaves
+    set / network-instance default protocols bgp neighbor 192.168.11.0 peer-as 65001
+    set / network-instance default protocols bgp neighbor 192.168.21.0 peer-group leaves
+    set / network-instance default protocols bgp neighbor 192.168.21.0 peer-as 65002
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: ai-training-spine2-startup-config
+    namespace: ai-training
+data:
+  startup-config: |-
+    set / interface ethernet-1/1 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ipv4 address 192.168.12.1/31
+    set / interface ethernet-1/2 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ipv4 address 192.168.22.1/31
+    set / interface system0 admin-state enable
+    set / interface system0 subinterface 0 ipv4 admin-state enable
+    set / interface system0 subinterface 0 ipv4 address 10.0.0.2/32
+
+    set / network-instance default interface ethernet-1/1.0
+    set / network-instance default interface ethernet-1/2.0
+    set / network-instance default interface system0.0
+
+    set / routing-policy policy ACCEPT-ALL default-action policy-result accept
+
+    set / network-instance default protocols bgp admin-state enable
+    set / network-instance default protocols bgp autonomous-system 65100
+    set / network-instance default protocols bgp router-id 10.0.0.2
+    set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+    set / network-instance default protocols bgp afi-safi ipv4-unicast multipath ebgp maximum-paths 2
+    set / network-instance default protocols bgp group leaves import-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp group leaves export-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp neighbor 192.168.12.0 peer-group leaves
+    set / network-instance default protocols bgp neighbor 192.168.12.0 peer-as 65001
+    set / network-instance default protocols bgp neighbor 192.168.22.0 peer-group leaves
+    set / network-instance default protocols bgp neighbor 192.168.22.0 peer-as 65002
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: ai-training-leaf1-startup-config
+    namespace: ai-training
+data:
+  startup-config: |-
+    set / interface ethernet-1/1 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ipv4 address 192.168.11.0/31
+    set / interface ethernet-1/2 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ipv4 address 192.168.12.0/31
+    set / interface ethernet-1/10 admin-state enable
+    set / interface ethernet-1/10 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/10 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/10 subinterface 0 ipv4 address 10.10.1.1/24
+    set / interface system0 admin-state enable
+    set / interface system0 subinterface 0 ipv4 admin-state enable
+    set / interface system0 subinterface 0 ipv4 address 10.0.1.1/32
+
+    set / network-instance default interface ethernet-1/1.0
+    set / network-instance default interface ethernet-1/2.0
+    set / network-instance default interface ethernet-1/10.0
+    set / network-instance default interface system0.0
+
+    set / routing-policy policy ACCEPT-ALL default-action policy-result accept
+
+    set / network-instance default protocols bgp admin-state enable
+    set / network-instance default protocols bgp autonomous-system 65001
+    set / network-instance default protocols bgp router-id 10.0.1.1
+    set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+    set / network-instance default protocols bgp afi-safi ipv4-unicast multipath ebgp maximum-paths 2
+    set / network-instance default protocols bgp group spines import-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp group spines export-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp neighbor 192.168.11.1 peer-group spines
+    set / network-instance default protocols bgp neighbor 192.168.11.1 peer-as 65100
+    set / network-instance default protocols bgp neighbor 192.168.12.1 peer-group spines
+    set / network-instance default protocols bgp neighbor 192.168.12.1 peer-as 65100
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: ai-training-leaf2-startup-config
+    namespace: ai-training
+data:
+  startup-config: |-
+    set / interface ethernet-1/1 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/1 subinterface 0 ipv4 address 192.168.21.0/31
+    set / interface ethernet-1/2 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/2 subinterface 0 ipv4 address 192.168.22.0/31
+    set / interface ethernet-1/10 admin-state enable
+    set / interface ethernet-1/10 subinterface 0 ip-mtu 9000
+    set / interface ethernet-1/10 subinterface 0 ipv4 admin-state enable
+    set / interface ethernet-1/10 subinterface 0 ipv4 address 10.10.2.1/24
+    set / interface system0 admin-state enable
+    set / interface system0 subinterface 0 ipv4 admin-state enable
+    set / interface system0 subinterface 0 ipv4 address 10.0.1.2/32
+
+    set / network-instance default interface ethernet-1/1.0
+    set / network-instance default interface ethernet-1/2.0
+    set / network-instance default interface ethernet-1/10.0
+    set / network-instance default interface system0.0
+
+    set / routing-policy policy ACCEPT-ALL default-action policy-result accept
+
+    set / network-instance default protocols bgp admin-state enable
+    set / network-instance default protocols bgp autonomous-system 65002
+    set / network-instance default protocols bgp router-id 10.0.1.2
+    set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+    set / network-instance default protocols bgp afi-safi ipv4-unicast multipath ebgp maximum-paths 2
+    set / network-instance default protocols bgp group spines import-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp group spines export-policy [ ACCEPT-ALL ]
+    set / network-instance default protocols bgp neighbor 192.168.21.1 peer-group spines
+    set / network-instance default protocols bgp neighbor 192.168.21.1 peer-as 65100
+    set / network-instance default protocols bgp neighbor 192.168.22.1 peer-group spines
+    set / network-instance default protocols bgp neighbor 192.168.22.1 peer-as 65100
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-training-worker1-files
+  namespace: ai-training
+data:
+  app-allreduce.py: |-
+    """Experiment A: scalar AllReduce. Default transport is RoCEv2 (rxe); --transport gloo uses TCP."""
+    import argparse
+    import os
+
+    import torch
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--transport", choices=["roce", "gloo"], default="roce")
+    args = p.parse_args()
+
+    rank = int(os.environ["RANK"])
+    world = int(os.environ["WORLD_SIZE"])
+    t = torch.tensor([2.0 * (rank + 1)])
+    print(f"rank={rank} world={world} transport={args.transport} before={t.item()}", flush=True)
+
+    if args.transport == "roce":
+        import torch.distributed as dist
+        from roce_ring import RoceRing
+
+        store = dist.TCPStore(os.environ["MASTER_ADDR"], int(os.environ["MASTER_PORT"]), world,
+                              is_master=rank == 0)
+        ring = RoceRing(store, rank, world, t.numel(), os.environ["ROCE_DEV"],
+                        log=lambda m: print(f"rank={rank} {m}", flush=True))
+        ring.allreduce_(t)
+        print(f"rank={rank} after={t.item()}", flush=True)
+        store.set(f"done/{rank}", "1")
+        store.get(f"done/{1 - rank}")
+    else:
+        import torch.distributed as dist
+
+        dist.init_process_group("gloo", init_method="env://")
+        dist.all_reduce(t, op=dist.ReduceOp.SUM)
+        print(f"rank={rank} sum={t.item()}", flush=True)
+        t /= world
+        print(f"rank={rank} after={t.item()}", flush=True)
+        dist.barrier()
+        dist.destroy_process_group()
+
+  app-roce_ring.py: |-
+    """NCCL-style ring AllReduce over RoCEv2 (Soft-RoCE / rxe) using libibverbs RC queue pairs.
+
+    Bootstrap (QP numbers, GIDs, rkeys) goes over a small TCP store, as NCCL bootstraps over sockets.
+    All gradient bytes move as RDMA WRITE-with-immediate on UDP/4791. Each channel is its own RC QP,
+    so its UDP source port differs and the fabric can ECMP-hash channels onto different spines.
+    Ring algorithm for world=2: reduce-scatter (send the peer's half, add the received half),
+    then all-gather (send the reduced own half). Each half is striped across the channels.
+    """
+    import glob
+    import json
+    import os
+    import random
+    import time
+
+    import numpy as np
+    import pyverbs.enums as e
+    from pyverbs.addr import GID, AHAttr, GlobalRoute
+    from pyverbs.cq import CQ
+    from pyverbs.device import Context
+    from pyverbs.mr import MR
+    from pyverbs.pd import PD
+    from pyverbs.qp import QP, QPAttr, QPCap, QPInitAttr
+    from pyverbs.wr import SGE, RecvWR, SendWR
+
+    ROCE_DSCP = 26
+    ECT0 = 0b10
+    PORT = 1
+    RS, AG = 1, 2
+
+
+    def roce_v2_ipv4_gid_index(dev):
+        base = f"/sys/class/infiniband/{dev}/ports/{PORT}"
+        for path in sorted(glob.glob(f"{base}/gids/*"), key=lambda p: int(p.rsplit("/", 1)[1])):
+            idx = int(path.rsplit("/", 1)[1])
+            try:
+                gid = open(path).read().strip()
+                gtype = open(f"{base}/gid_attrs/types/{idx}").read().strip()
+            except OSError:
+                continue
+            if gid.startswith("0000:0000:0000:0000:0000:ffff") and "v2" in gtype:
+                return idx
+        raise RuntimeError(f"no RoCE v2 IPv4 GID on {dev}")
+
+
+    class RoceRing:
+        def __init__(self, store, rank, world, numel, dev, channels=2, mtu=e.IBV_MTU_4096,
+                     tclass=(ROCE_DSCP << 2) | ECT0, log=print):
+            assert world == 2, "this lab's ring is written for two ranks"
+            self.rank, self.world, self.channels, self.log = rank, world, channels, log
+            unit = 2 * channels
+            self.numel = -(-numel // unit) * unit
+            self.nbytes = self.numel * 4
+            self.stripe = self.nbytes // unit
+
+            self.ctx = Context(name=dev)
+            self.pd = PD(self.ctx)
+            self.cq = CQ(self.ctx, 4096)
+            access = e.IBV_ACCESS_LOCAL_WRITE | e.IBV_ACCESS_REMOTE_WRITE
+            self.buf = MR(self.pd, self.nbytes, access)
+            self.rcv = MR(self.pd, self.nbytes, access)
+            self.imm_sink = MR(self.pd, 64, e.IBV_ACCESS_LOCAL_WRITE)
+            self.gid_index = roce_v2_ipv4_gid_index(dev)
+            gid = self.ctx.query_gid(PORT, self.gid_index)
+
+            cap = QPCap(max_send_wr=256, max_recv_wr=512, max_send_sge=1, max_recv_sge=1)
+            self.qps = [QP(self.pd, QPInitAttr(qp_type=e.IBV_QPT_RC, scq=self.cq, rcq=self.cq, cap=cap))
+                        for _ in range(channels)]
+            psn = [random.randrange(1 << 24) for _ in range(channels)]
+            me = dict(gid=str(gid), qpn=[q.qp_num for q in self.qps], psn=psn,
+                      buf=[self.buf.buf, self.buf.rkey], rcv=[self.rcv.buf, self.rcv.rkey])
+            store.set(f"roce/{rank}", json.dumps(me))
+            peer = json.loads(store.get(f"roce/{1 - rank}"))
+            self.peer = peer
+
+            for i, qp in enumerate(self.qps):
+                attr = QPAttr(port_num=PORT)
+                attr.qp_access_flags = access
+                qp.to_init(attr)
+                gr = GlobalRoute(dgid=GID(peer["gid"]), sgid_index=self.gid_index,
+                                 hop_limit=64, traffic_class=tclass)
+                attr.ah_attr = AHAttr(port_num=PORT, is_global=1, gr=gr)
+                attr.path_mtu = mtu
+                attr.dest_qp_num = peer["qpn"][i]
+                attr.rq_psn = peer["psn"][i]
+                attr.max_dest_rd_atomic = 1
+                attr.min_rnr_timer = 12
+                qp.to_rtr(attr)
+                attr.sq_psn = psn[i]
+                attr.timeout = 14
+                attr.retry_cnt = 7
+                attr.rnr_retry = 7
+                attr.max_rd_atomic = 1
+                qp.to_rts(attr)
+                for _ in range(256):
+                    qp.post_recv(self._recv_wr())
+            self.qpn_to_ch = {q.qp_num: i for i, q in enumerate(self.qps)}
+            self.seq = 0
+            store.set(f"roce/ready/{rank}", "1")
+            store.get(f"roce/ready/{1 - rank}")
+            log(f"roce dev={dev} gid_index={self.gid_index} gid={gid} qpn={me['qpn']} "
+                f"peer_gid={peer['gid']} peer_qpn={peer['qpn']} channels={channels} "
+                f"tclass=0x{tclass:02x} (DSCP {tclass >> 2}, ECN {tclass & 3})")
+
+        def _recv_wr(self):
+            return RecvWR(num_sge=1, sg=[SGE(self.imm_sink.buf, 64, self.imm_sink.lkey)])
+
+        def _write(self, ch, src_off, peer_mr, dst_off, tag):
+            qp = self.qps[ch]
+            wr = SendWR(wr_id=tag, opcode=e.IBV_WR_RDMA_WRITE_WITH_IMM, num_sge=1,
+                        sg=[SGE(self.buf.buf + src_off, self.stripe, self.buf.lkey)],
+                        send_flags=e.IBV_SEND_SIGNALED)
+            wr.imm_data = tag
+            wr.set_wr_rdma(self.peer[peer_mr][1], self.peer[peer_mr][0] + dst_off)
+            qp.post_send(wr)
+
+        def _wait(self, sends, recvs, timeout=60.0):
+            deadline = time.monotonic() + timeout
+            while sends or recvs:
+                n, wcs = self.cq.poll(num_entries=16)
+                for wc in wcs[:n]:
+                    if wc.status != e.IBV_WC_SUCCESS:
+                        raise RuntimeError(f"WC error status={wc.status} opcode={wc.opcode} qpn={wc.qp_num}")
+                    if wc.opcode == e.IBV_WC_RDMA_WRITE:
+                        sends.discard(wc.wr_id)
+                    elif wc.opcode == e.IBV_WC_RECV_RDMA_WITH_IMM:
+                        recvs.discard(wc.imm_data)
+                        self.qps[self.qpn_to_ch[wc.qp_num]].post_recv(self._recv_wr())
+                if not n and time.monotonic() > deadline:
+                    raise TimeoutError(f"pending sends={sends} recvs={recvs}")
+
+        def _offset(self, half, ch):
+            return (half * self.channels + ch) * self.stripe
+
+        def _tag(self, phase, ch):
+            return ((self.seq & 0xFFFFF) << 8) | (phase << 4) | ch
+
+        def allreduce_(self, flat):
+            """In-place average of a contiguous float32 tensor or ndarray across both ranks."""
+            arr = flat.numpy() if hasattr(flat, "numpy") else flat
+            n = arr.size
+            data = np.zeros(self.numel, dtype=np.float32)
+            data[:n] = arr.reshape(-1)
+            self.buf.write(data.tobytes(), self.nbytes, 0)
+            own, other = self.rank, 1 - self.rank
+            stats = {}
+
+            t0 = time.perf_counter()
+            sends, recvs = set(), set()
+            for ch in range(self.channels):
+                off = self._offset(other, ch)
+                tag = self._tag(RS, ch)
+                self._write(ch, off, "rcv", off, tag)
+                sends.add(tag)
+                recvs.add(tag)
+            self._wait(sends, recvs)
+            lo, hi = self._offset(own, 0), self._offset(own + 1, 0)
+            mine = np.frombuffer(self.buf.read(hi - lo, lo), dtype=np.float32)
+            theirs = np.frombuffer(self.rcv.read(hi - lo, lo), dtype=np.float32)
+            reduced = mine + theirs
+            self.buf.write(reduced.tobytes(), hi - lo, lo)
+            stats["reduce_scatter_ms"] = (time.perf_counter() - t0) * 1000
+
+            t1 = time.perf_counter()
+            sends, recvs = set(), set()
+            for ch in range(self.channels):
+                off = self._offset(own, ch)
+                tag = self._tag(AG, ch)
+                self._write(ch, off, "buf", off, tag)
+                sends.add(tag)
+                recvs.add(tag)
+            self._wait(sends, recvs)
+            stats["all_gather_ms"] = (time.perf_counter() - t1) * 1000
+            self.seq += 1
+
+            out = np.frombuffer(self.buf.read(self.nbytes, 0), dtype=np.float32)[:n] / self.world
+            arr.reshape(-1)[:] = out
+            stats["wire_payload_bytes_sent"] = 2 * self.channels * self.stripe
+            return stats
+
+  app-train.py: |-
+    """Experiment B: data-parallel MLP training. Gradients are averaged every step with an
+    NCCL-style ring AllReduce over RoCEv2 (default) or with PyTorch DDP over Gloo/TCP (--transport gloo)."""
+    import argparse
+    import os
+    import time
+
+    import torch
+    import torch.distributed as dist
+    import torch.nn as nn
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--steps", type=int, default=20)
+    p.add_argument("--features", type=int, default=1024)
+    p.add_argument("--hidden", type=int, default=2048)
+    p.add_argument("--batch", type=int, default=32)
+    p.add_argument("--lr", type=float, default=0.003)
+    p.add_argument("--channels", type=int, default=2)
+    p.add_argument("--transport", choices=["roce", "gloo"], default="roce")
+    args = p.parse_args()
+
+    rank = int(os.environ["RANK"])
+    world = int(os.environ["WORLD_SIZE"])
+    torch.set_num_threads(2)
+
+
+    def log(msg):
+        print(f"rank={rank} {msg}", flush=True)
+
+
+    def grad_checksum(m):
+        return sum(q.grad.double().sum().item() for q in m.parameters())
+
+
+    def model_checksum(m):
+        return sum(q.detach().double().sum().item() for q in m.parameters())
+
+
+    torch.manual_seed(0)
+    model = nn.Sequential(nn.Linear(args.features, args.hidden), nn.ReLU(), nn.Linear(args.hidden, 1))
+    w_true = torch.randn(args.features, 1)
+    params = sum(q.numel() for q in model.parameters())
+    log(f"transport={args.transport} params={params} gradient_bytes_FP32={params * 4} "
+        f"batch={args.batch} steps={args.steps}")
+
+    if args.transport == "roce":
+        from roce_ring import RoceRing
+
+        store = dist.TCPStore(os.environ["MASTER_ADDR"], int(os.environ["MASTER_PORT"]), world,
+                              is_master=rank == 0)
+        ring = RoceRing(store, rank, world, params, os.environ["ROCE_DEV"], channels=args.channels, log=log)
+        flat = torch.zeros(params)
+
+        def sync_grads(net):
+            torch.cat([q.grad.flatten() for q in net.parameters()], out=flat)
+            stats = ring.allreduce_(flat)
+            off = 0
+            for q in net.parameters():
+                q.grad.copy_(flat[off:off + q.numel()].view_as(q.grad))
+                off += q.numel()
+            return stats
+
+        net = model
+    else:
+        from torch.nn.parallel import DistributedDataParallel as DDP
+
+        dist.init_process_group("gloo", init_method="env://")
+        net = DDP(model)
+
+        def sync_grads(_net):
+            return {}
+
+    opt = torch.optim.SGD(net.parameters(), lr=args.lr)
+    loss_fn = nn.MSELoss()
+    data = torch.Generator().manual_seed(1000 + rank)
+
+
+    def batch():
+        x = torch.randn(args.batch, args.features, generator=data)
+        return x, x @ w_true / args.features**0.5
+
+
+    eval_gen = torch.Generator().manual_seed(7)
+    x_eval = torch.randn(256, args.features, generator=eval_gen)
+    y_eval = x_eval @ w_true / args.features**0.5
+
+
+    def eval_loss():
+        with torch.no_grad():
+            return loss_fn(model(x_eval), y_eval).item()
+
+
+    log(f"initial model_checksum={model_checksum(model):.10f} eval_loss={eval_loss():.6f}")
+
+    x0, y0 = batch()
+    if args.transport == "gloo":
+        with net.no_sync():
+            loss_fn(net(x0), y0).backward()
+    else:
+        loss_fn(net(x0), y0).backward()
+    log(f"probe local_grad_checksum={grad_checksum(model):.10f}")
+    opt.zero_grad(set_to_none=False)
+
+    for step in range(args.steps):
+        x, y = (x0, y0) if step == 0 else batch()
+        t0 = time.perf_counter()
+        loss = loss_fn(net(x), y)
+        loss.backward()
+        t1 = time.perf_counter()
+        stats = sync_grads(net)
+        t2 = time.perf_counter()
+        synced = grad_checksum(model)
+        opt.step()
+        opt.zero_grad(set_to_none=False)
+        t3 = time.perf_counter()
+        extra = " ".join(f"{k}={v:.1f}" for k, v in stats.items() if k.endswith("_ms"))
+        log(f"step={step} loss={loss.item():.6f} synced_grad_checksum={synced:.10f} "
+            f"compute_ms={(t1 - t0) * 1000:.1f} allreduce_ms={(t2 - t1) * 1000:.1f} {extra} "
+            f"elapsed_ms={(t3 - t0) * 1000:.1f}")
+
+    log(f"final model_checksum={model_checksum(model):.10f} eval_loss={eval_loss():.6f}")
+    if args.transport == "roce":
+        store.set(f"done/{rank}", "1")
+        store.get(f"done/{1 - rank}")
+    else:
+        dist.barrier()
+        dist.destroy_process_group()
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-training-worker2-files
+  namespace: ai-training
+data:
+  app-allreduce.py: |-
+    """Experiment A: scalar AllReduce. Default transport is RoCEv2 (rxe); --transport gloo uses TCP."""
+    import argparse
+    import os
+
+    import torch
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--transport", choices=["roce", "gloo"], default="roce")
+    args = p.parse_args()
+
+    rank = int(os.environ["RANK"])
+    world = int(os.environ["WORLD_SIZE"])
+    t = torch.tensor([2.0 * (rank + 1)])
+    print(f"rank={rank} world={world} transport={args.transport} before={t.item()}", flush=True)
+
+    if args.transport == "roce":
+        import torch.distributed as dist
+        from roce_ring import RoceRing
+
+        store = dist.TCPStore(os.environ["MASTER_ADDR"], int(os.environ["MASTER_PORT"]), world,
+                              is_master=rank == 0)
+        ring = RoceRing(store, rank, world, t.numel(), os.environ["ROCE_DEV"],
+                        log=lambda m: print(f"rank={rank} {m}", flush=True))
+        ring.allreduce_(t)
+        print(f"rank={rank} after={t.item()}", flush=True)
+        store.set(f"done/{rank}", "1")
+        store.get(f"done/{1 - rank}")
+    else:
+        import torch.distributed as dist
+
+        dist.init_process_group("gloo", init_method="env://")
+        dist.all_reduce(t, op=dist.ReduceOp.SUM)
+        print(f"rank={rank} sum={t.item()}", flush=True)
+        t /= world
+        print(f"rank={rank} after={t.item()}", flush=True)
+        dist.barrier()
+        dist.destroy_process_group()
+
+  app-roce_ring.py: |-
+    """NCCL-style ring AllReduce over RoCEv2 (Soft-RoCE / rxe) using libibverbs RC queue pairs.
+
+    Bootstrap (QP numbers, GIDs, rkeys) goes over a small TCP store, as NCCL bootstraps over sockets.
+    All gradient bytes move as RDMA WRITE-with-immediate on UDP/4791. Each channel is its own RC QP,
+    so its UDP source port differs and the fabric can ECMP-hash channels onto different spines.
+    Ring algorithm for world=2: reduce-scatter (send the peer's half, add the received half),
+    then all-gather (send the reduced own half). Each half is striped across the channels.
+    """
+    import glob
+    import json
+    import os
+    import random
+    import time
+
+    import numpy as np
+    import pyverbs.enums as e
+    from pyverbs.addr import GID, AHAttr, GlobalRoute
+    from pyverbs.cq import CQ
+    from pyverbs.device import Context
+    from pyverbs.mr import MR
+    from pyverbs.pd import PD
+    from pyverbs.qp import QP, QPAttr, QPCap, QPInitAttr
+    from pyverbs.wr import SGE, RecvWR, SendWR
+
+    ROCE_DSCP = 26
+    ECT0 = 0b10
+    PORT = 1
+    RS, AG = 1, 2
+
+
+    def roce_v2_ipv4_gid_index(dev):
+        base = f"/sys/class/infiniband/{dev}/ports/{PORT}"
+        for path in sorted(glob.glob(f"{base}/gids/*"), key=lambda p: int(p.rsplit("/", 1)[1])):
+            idx = int(path.rsplit("/", 1)[1])
+            try:
+                gid = open(path).read().strip()
+                gtype = open(f"{base}/gid_attrs/types/{idx}").read().strip()
+            except OSError:
+                continue
+            if gid.startswith("0000:0000:0000:0000:0000:ffff") and "v2" in gtype:
+                return idx
+        raise RuntimeError(f"no RoCE v2 IPv4 GID on {dev}")
+
+
+    class RoceRing:
+        def __init__(self, store, rank, world, numel, dev, channels=2, mtu=e.IBV_MTU_4096,
+                     tclass=(ROCE_DSCP << 2) | ECT0, log=print):
+            assert world == 2, "this lab's ring is written for two ranks"
+            self.rank, self.world, self.channels, self.log = rank, world, channels, log
+            unit = 2 * channels
+            self.numel = -(-numel // unit) * unit
+            self.nbytes = self.numel * 4
+            self.stripe = self.nbytes // unit
+
+            self.ctx = Context(name=dev)
+            self.pd = PD(self.ctx)
+            self.cq = CQ(self.ctx, 4096)
+            access = e.IBV_ACCESS_LOCAL_WRITE | e.IBV_ACCESS_REMOTE_WRITE
+            self.buf = MR(self.pd, self.nbytes, access)
+            self.rcv = MR(self.pd, self.nbytes, access)
+            self.imm_sink = MR(self.pd, 64, e.IBV_ACCESS_LOCAL_WRITE)
+            self.gid_index = roce_v2_ipv4_gid_index(dev)
+            gid = self.ctx.query_gid(PORT, self.gid_index)
+
+            cap = QPCap(max_send_wr=256, max_recv_wr=512, max_send_sge=1, max_recv_sge=1)
+            self.qps = [QP(self.pd, QPInitAttr(qp_type=e.IBV_QPT_RC, scq=self.cq, rcq=self.cq, cap=cap))
+                        for _ in range(channels)]
+            psn = [random.randrange(1 << 24) for _ in range(channels)]
+            me = dict(gid=str(gid), qpn=[q.qp_num for q in self.qps], psn=psn,
+                      buf=[self.buf.buf, self.buf.rkey], rcv=[self.rcv.buf, self.rcv.rkey])
+            store.set(f"roce/{rank}", json.dumps(me))
+            peer = json.loads(store.get(f"roce/{1 - rank}"))
+            self.peer = peer
+
+            for i, qp in enumerate(self.qps):
+                attr = QPAttr(port_num=PORT)
+                attr.qp_access_flags = access
+                qp.to_init(attr)
+                gr = GlobalRoute(dgid=GID(peer["gid"]), sgid_index=self.gid_index,
+                                 hop_limit=64, traffic_class=tclass)
+                attr.ah_attr = AHAttr(port_num=PORT, is_global=1, gr=gr)
+                attr.path_mtu = mtu
+                attr.dest_qp_num = peer["qpn"][i]
+                attr.rq_psn = peer["psn"][i]
+                attr.max_dest_rd_atomic = 1
+                attr.min_rnr_timer = 12
+                qp.to_rtr(attr)
+                attr.sq_psn = psn[i]
+                attr.timeout = 14
+                attr.retry_cnt = 7
+                attr.rnr_retry = 7
+                attr.max_rd_atomic = 1
+                qp.to_rts(attr)
+                for _ in range(256):
+                    qp.post_recv(self._recv_wr())
+            self.qpn_to_ch = {q.qp_num: i for i, q in enumerate(self.qps)}
+            self.seq = 0
+            store.set(f"roce/ready/{rank}", "1")
+            store.get(f"roce/ready/{1 - rank}")
+            log(f"roce dev={dev} gid_index={self.gid_index} gid={gid} qpn={me['qpn']} "
+                f"peer_gid={peer['gid']} peer_qpn={peer['qpn']} channels={channels} "
+                f"tclass=0x{tclass:02x} (DSCP {tclass >> 2}, ECN {tclass & 3})")
+
+        def _recv_wr(self):
+            return RecvWR(num_sge=1, sg=[SGE(self.imm_sink.buf, 64, self.imm_sink.lkey)])
+
+        def _write(self, ch, src_off, peer_mr, dst_off, tag):
+            qp = self.qps[ch]
+            wr = SendWR(wr_id=tag, opcode=e.IBV_WR_RDMA_WRITE_WITH_IMM, num_sge=1,
+                        sg=[SGE(self.buf.buf + src_off, self.stripe, self.buf.lkey)],
+                        send_flags=e.IBV_SEND_SIGNALED)
+            wr.imm_data = tag
+            wr.set_wr_rdma(self.peer[peer_mr][1], self.peer[peer_mr][0] + dst_off)
+            qp.post_send(wr)
+
+        def _wait(self, sends, recvs, timeout=60.0):
+            deadline = time.monotonic() + timeout
+            while sends or recvs:
+                n, wcs = self.cq.poll(num_entries=16)
+                for wc in wcs[:n]:
+                    if wc.status != e.IBV_WC_SUCCESS:
+                        raise RuntimeError(f"WC error status={wc.status} opcode={wc.opcode} qpn={wc.qp_num}")
+                    if wc.opcode == e.IBV_WC_RDMA_WRITE:
+                        sends.discard(wc.wr_id)
+                    elif wc.opcode == e.IBV_WC_RECV_RDMA_WITH_IMM:
+                        recvs.discard(wc.imm_data)
+                        self.qps[self.qpn_to_ch[wc.qp_num]].post_recv(self._recv_wr())
+                if not n and time.monotonic() > deadline:
+                    raise TimeoutError(f"pending sends={sends} recvs={recvs}")
+
+        def _offset(self, half, ch):
+            return (half * self.channels + ch) * self.stripe
+
+        def _tag(self, phase, ch):
+            return ((self.seq & 0xFFFFF) << 8) | (phase << 4) | ch
+
+        def allreduce_(self, flat):
+            """In-place average of a contiguous float32 tensor or ndarray across both ranks."""
+            arr = flat.numpy() if hasattr(flat, "numpy") else flat
+            n = arr.size
+            data = np.zeros(self.numel, dtype=np.float32)
+            data[:n] = arr.reshape(-1)
+            self.buf.write(data.tobytes(), self.nbytes, 0)
+            own, other = self.rank, 1 - self.rank
+            stats = {}
+
+            t0 = time.perf_counter()
+            sends, recvs = set(), set()
+            for ch in range(self.channels):
+                off = self._offset(other, ch)
+                tag = self._tag(RS, ch)
+                self._write(ch, off, "rcv", off, tag)
+                sends.add(tag)
+                recvs.add(tag)
+            self._wait(sends, recvs)
+            lo, hi = self._offset(own, 0), self._offset(own + 1, 0)
+            mine = np.frombuffer(self.buf.read(hi - lo, lo), dtype=np.float32)
+            theirs = np.frombuffer(self.rcv.read(hi - lo, lo), dtype=np.float32)
+            reduced = mine + theirs
+            self.buf.write(reduced.tobytes(), hi - lo, lo)
+            stats["reduce_scatter_ms"] = (time.perf_counter() - t0) * 1000
+
+            t1 = time.perf_counter()
+            sends, recvs = set(), set()
+            for ch in range(self.channels):
+                off = self._offset(own, ch)
+                tag = self._tag(AG, ch)
+                self._write(ch, off, "buf", off, tag)
+                sends.add(tag)
+                recvs.add(tag)
+            self._wait(sends, recvs)
+            stats["all_gather_ms"] = (time.perf_counter() - t1) * 1000
+            self.seq += 1
+
+            out = np.frombuffer(self.buf.read(self.nbytes, 0), dtype=np.float32)[:n] / self.world
+            arr.reshape(-1)[:] = out
+            stats["wire_payload_bytes_sent"] = 2 * self.channels * self.stripe
+            return stats
+
+  app-train.py: |-
+    """Experiment B: data-parallel MLP training. Gradients are averaged every step with an
+    NCCL-style ring AllReduce over RoCEv2 (default) or with PyTorch DDP over Gloo/TCP (--transport gloo)."""
+    import argparse
+    import os
+    import time
+
+    import torch
+    import torch.distributed as dist
+    import torch.nn as nn
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--steps", type=int, default=20)
+    p.add_argument("--features", type=int, default=1024)
+    p.add_argument("--hidden", type=int, default=2048)
+    p.add_argument("--batch", type=int, default=32)
+    p.add_argument("--lr", type=float, default=0.003)
+    p.add_argument("--channels", type=int, default=2)
+    p.add_argument("--transport", choices=["roce", "gloo"], default="roce")
+    args = p.parse_args()
+
+    rank = int(os.environ["RANK"])
+    world = int(os.environ["WORLD_SIZE"])
+    torch.set_num_threads(2)
+
+
+    def log(msg):
+        print(f"rank={rank} {msg}", flush=True)
+
+
+    def grad_checksum(m):
+        return sum(q.grad.double().sum().item() for q in m.parameters())
+
+
+    def model_checksum(m):
+        return sum(q.detach().double().sum().item() for q in m.parameters())
+
+
+    torch.manual_seed(0)
+    model = nn.Sequential(nn.Linear(args.features, args.hidden), nn.ReLU(), nn.Linear(args.hidden, 1))
+    w_true = torch.randn(args.features, 1)
+    params = sum(q.numel() for q in model.parameters())
+    log(f"transport={args.transport} params={params} gradient_bytes_FP32={params * 4} "
+        f"batch={args.batch} steps={args.steps}")
+
+    if args.transport == "roce":
+        from roce_ring import RoceRing
+
+        store = dist.TCPStore(os.environ["MASTER_ADDR"], int(os.environ["MASTER_PORT"]), world,
+                              is_master=rank == 0)
+        ring = RoceRing(store, rank, world, params, os.environ["ROCE_DEV"], channels=args.channels, log=log)
+        flat = torch.zeros(params)
+
+        def sync_grads(net):
+            torch.cat([q.grad.flatten() for q in net.parameters()], out=flat)
+            stats = ring.allreduce_(flat)
+            off = 0
+            for q in net.parameters():
+                q.grad.copy_(flat[off:off + q.numel()].view_as(q.grad))
+                off += q.numel()
+            return stats
+
+        net = model
+    else:
+        from torch.nn.parallel import DistributedDataParallel as DDP
+
+        dist.init_process_group("gloo", init_method="env://")
+        net = DDP(model)
+
+        def sync_grads(_net):
+            return {}
+
+    opt = torch.optim.SGD(net.parameters(), lr=args.lr)
+    loss_fn = nn.MSELoss()
+    data = torch.Generator().manual_seed(1000 + rank)
+
+
+    def batch():
+        x = torch.randn(args.batch, args.features, generator=data)
+        return x, x @ w_true / args.features**0.5
+
+
+    eval_gen = torch.Generator().manual_seed(7)
+    x_eval = torch.randn(256, args.features, generator=eval_gen)
+    y_eval = x_eval @ w_true / args.features**0.5
+
+
+    def eval_loss():
+        with torch.no_grad():
+            return loss_fn(model(x_eval), y_eval).item()
+
+
+    log(f"initial model_checksum={model_checksum(model):.10f} eval_loss={eval_loss():.6f}")
+
+    x0, y0 = batch()
+    if args.transport == "gloo":
+        with net.no_sync():
+            loss_fn(net(x0), y0).backward()
+    else:
+        loss_fn(net(x0), y0).backward()
+    log(f"probe local_grad_checksum={grad_checksum(model):.10f}")
+    opt.zero_grad(set_to_none=False)
+
+    for step in range(args.steps):
+        x, y = (x0, y0) if step == 0 else batch()
+        t0 = time.perf_counter()
+        loss = loss_fn(net(x), y)
+        loss.backward()
+        t1 = time.perf_counter()
+        stats = sync_grads(net)
+        t2 = time.perf_counter()
+        synced = grad_checksum(model)
+        opt.step()
+        opt.zero_grad(set_to_none=False)
+        t3 = time.perf_counter()
+        extra = " ".join(f"{k}={v:.1f}" for k, v in stats.items() if k.endswith("_ms"))
+        log(f"step={step} loss={loss.item():.6f} synced_grad_checksum={synced:.10f} "
+            f"compute_ms={(t1 - t0) * 1000:.1f} allreduce_ms={(t2 - t1) * 1000:.1f} {extra} "
+            f"elapsed_ms={(t3 - t0) * 1000:.1f}")
+
+    log(f"final model_checksum={model_checksum(model):.10f} eval_loss={eval_loss():.6f}")
+    if args.transport == "roce":
+        store.set(f"done/{rank}", "1")
+        store.get(f"done/{1 - rank}")
+    else:
+        dist.barrier()
+        dist.destroy_process_group()
+
+---
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: ai-training
+  namespace: ai-training
+spec:
+  deployment:
+    filesFromConfigMap:
+        leaf1:
+          - filePath: configs/leaf1.cli
+            configMapName: ai-training-leaf1-startup-config
+            configMapPath: startup-config
+            mode: read
+        leaf2:
+          - filePath: configs/leaf2.cli
+            configMapName: ai-training-leaf2-startup-config
+            configMapPath: startup-config
+            mode: read
+        spine1:
+          - filePath: configs/spine1.cli
+            configMapName: ai-training-spine1-startup-config
+            configMapPath: startup-config
+            mode: read
+        spine2:
+          - filePath: configs/spine2.cli
+            configMapName: ai-training-spine2-startup-config
+            configMapPath: startup-config
+            mode: read
+        worker1:
+          - filePath: app/allreduce.py
+            configMapName: ai-training-worker1-files
+            configMapPath: app-allreduce.py
+            mode: 
+          - filePath: app/roce_ring.py
+            configMapName: ai-training-worker1-files
+            configMapPath: app-roce_ring.py
+            mode: 
+          - filePath: app/train.py
+            configMapName: ai-training-worker1-files
+            configMapPath: app-train.py
+            mode: 
+        worker2:
+          - filePath: app/allreduce.py
+            configMapName: ai-training-worker2-files
+            configMapPath: app-allreduce.py
+            mode: 
+          - filePath: app/roce_ring.py
+            configMapName: ai-training-worker2-files
+            configMapPath: app-roce_ring.py
+            mode: 
+          - filePath: app/train.py
+            configMapName: ai-training-worker2-files
+            configMapPath: app-train.py
+            mode: 
+  naming: non-prefixed
+  definition:
+    containerlab: |-
+          # Distributed AI Training packet lab: 2 PyTorch CPU workers on a minimal SR Linux Clos.
+          #
+          #        spine1 10.0.0.1 (AS65100)          spine2 10.0.0.2 (AS65100)
+          #          e1-1 |       \ e1-2           e1-1 /       | e1-2
+          #               |        \__________________/         |
+          #               |         /                \          |
+          #          e1-1 |        / e1-2        e1-1 \         | e1-2
+          #        leaf1 10.0.1.1 (AS65001)          leaf2 10.0.1.2 (AS65002)
+          #               | e1-10  gw 10.10.1.1             | e1-10  gw 10.10.2.1
+          #        worker1 10.10.1.2/24 (rank 0)     worker2 10.10.2.2/24 (rank 1)
+          #
+          # eBGP underlay over /31s, 2-way ECMP leaf -> spine. Gradients move as RoCEv2 (UDP/4791,
+          # DSCP 26, ECT(0)) from Soft-RoCE (rxe) on each worker's eth1, using an NCCL-style ring AllReduce.
+          # Host needs: sudo modprobe rdma_rxe ib_uverbs.
+          # Switch type ixr-h5-64o (7220 IXR-H5-64O, TH5) stands in for TH6: the 26.7.2 image knows
+          # ixr-h6 (7220 IXR-H6-64) but shuts it down after boot without a license. With a license file,
+          # set type: ixr-h6 and add license: <file> on the four switches. SR Linux here is a virtual
+          # forwarding model, not Tomahawk silicon.
+          name: ai-training
+
+          mgmt:
+            network: ai-training-mgmt
+            ipv4-subnet: 172.30.40.0/24
+
+          topology:
+            kinds:
+              nokia_srlinux:
+                image: ghcr.io/nokia/srlinux:26.7.2
+              linux:
+                image: python:3.11-slim
+
+            nodes:
+              spine1:
+                kind: nokia_srlinux
+                type: ixr-h5-64o
+                startup-config: configs/spine1.cli
+                labels:
+                  graph-level: 1
+                  graph-icon: spine
+              spine2:
+                kind: nokia_srlinux
+                type: ixr-h5-64o
+                startup-config: configs/spine2.cli
+                labels:
+                  graph-level: 1
+                  graph-icon: spine
+              leaf1:
+                kind: nokia_srlinux
+                type: ixr-h5-64o
+                startup-config: configs/leaf1.cli
+                labels:
+                  graph-level: 2
+                  graph-icon: leaf
+              leaf2:
+                kind: nokia_srlinux
+                type: ixr-h5-64o
+                startup-config: configs/leaf2.cli
+                labels:
+                  graph-level: 2
+                  graph-icon: leaf
+              worker1:
+                kind: linux
+                cmd: sleep infinity
+                binds:
+                  - ./app:/lab/app:ro
+                labels:
+                  graph-level: 3
+                  graph-icon: host
+              worker2:
+                kind: linux
+                cmd: sleep infinity
+                binds:
+                  - ./app:/lab/app:ro
+                labels:
+                  graph-level: 3
+                  graph-icon: host
+
+            links:
+              - endpoints: ["spine1:e1-1", "leaf1:e1-1"]
+              - endpoints: ["spine2:e1-1", "leaf1:e1-2"]
+              - endpoints: ["spine1:e1-2", "leaf2:e1-1"]
+              - endpoints: ["spine2:e1-2", "leaf2:e1-2"]
+              - endpoints: ["leaf1:e1-10", "worker1:eth1"]
+              - endpoints: ["leaf2:e1-10", "worker2:eth1"]

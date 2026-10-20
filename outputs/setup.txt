@@ -1,0 +1,23 @@
+== clab-ai-training-worker1: installing packages (apt rdma-core/pyverbs + CPU PyTorch)
+== clab-ai-training-worker2: installing packages (apt rdma-core/pyverbs + CPU PyTorch)
+== clab-ai-training-worker1: eth1 10.10.1.2/24 via 10.10.1.1, Soft-RoCE device rxe_w1
+== clab-ai-training-worker2: eth1 10.10.2.2/24 via 10.10.2.1, Soft-RoCE device rxe_w2
+link rxe_w1/1 state ACTIVE physical_state LINK_UP netdev eth1 
+link rxe_w2/1 state ACTIVE physical_state LINK_UP 
+== waiting for 4 established BGP sessions
+   6/4 sessions established
+== RoCE QoS (DSCP 26 RoCE data class with ECN, DSCP 48 CNP strict priority)
+   leaf1: committed
+   leaf2: committed
+   spine1: committed
+   spine2: committed
+== ECMP check on leaf1 for 10.10.2.0/24
+Parsing error: Unknown token 'ipv4-unicast'. Options are ['#', '>', '>>', '{', '|']
+PING 10.10.2.2 (10.10.2.2) 56(84) bytes of data.
+64 bytes from 10.10.2.2: icmp_seq=1 ttl=61 time=17.2 ms
+64 bytes from 10.10.2.2: icmp_seq=2 ttl=61 time=2.58 ms
+64 bytes from 10.10.2.2: icmp_seq=3 ttl=61 time=3.18 ms
+
+--- 10.10.2.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 2.580/7.646/17.177/6.743 ms

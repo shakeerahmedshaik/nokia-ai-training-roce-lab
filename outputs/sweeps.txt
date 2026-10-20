@@ -1,0 +1,18 @@
+## hidden (features=1024, steps=20, batch=32)
+hidden=256       params=262657   grad_MB=1.1    wire_MB=88.3    roce_frames=24697   mean_compute_ms=7.1    mean_allreduce_ms=539    leaf_discards=8856   checksums_match=yes
+hidden=2048      params=2101249  grad_MB=8.4    wire_MB=866.0   roce_frames=217430  mean_compute_ms=18.0   mean_allreduce_ms=1459   leaf_discards=93078  checksums_match=yes
+hidden=4096      params=4202497  grad_MB=16.8   wire_MB=1755.0  roce_frames=436609  mean_compute_ms=43.0   mean_allreduce_ms=2335   leaf_discards=173313 checksums_match=yes
+## steps (hidden=2048)
+steps=1          params=2101249  grad_MB=8.4    wire_MB=50.6    roce_frames=12970   mean_compute_ms=23.3   mean_allreduce_ms=2394   leaf_discards=7360   checksums_match=yes
+steps=20         params=2101249  grad_MB=8.4    wire_MB=991.6   roce_frames=248948  mean_compute_ms=22.5   mean_allreduce_ms=1769   leaf_discards=117598 checksums_match=yes
+## batch (hidden=2048, steps=20)
+batch=8          params=2101249  grad_MB=8.4    wire_MB=970.3   roce_frames=243981  mean_compute_ms=15.0   mean_allreduce_ms=1713   leaf_discards=113709 checksums_match=yes
+batch=64         params=2101249  grad_MB=8.4    wire_MB=971.1   roce_frames=243652  mean_compute_ms=35.5   mean_allreduce_ms=1698   leaf_discards=105804 checksums_match=yes
+## sender pacing on both workers (hidden=2048, steps=20)
+pace=off         params=2101249  grad_MB=8.4    wire_MB=968.4   roce_frames=242269  mean_compute_ms=26.4   mean_allreduce_ms=1656   leaf_discards=106565 checksums_match=yes
+pace=100mbit     params=2101249  grad_MB=8.4    wire_MB=362.6   roce_frames=89386   mean_compute_ms=22.7   mean_allreduce_ms=805    leaf_discards=7      checksums_match=yes
+pace=60mbit      params=2101249  grad_MB=8.4    wire_MB=390.4   roce_frames=104018  mean_compute_ms=25.5   mean_allreduce_ms=1386   leaf_discards=15     checksums_match=yes
+## netem delay on worker2 eth1 (hidden=2048, steps=20)
+delay=0ms        params=2101249  grad_MB=8.4    wire_MB=943.5   roce_frames=236233  mean_compute_ms=23.1   mean_allreduce_ms=1624   leaf_discards=108711 checksums_match=yes
+delay=5ms        params=2101249  grad_MB=8.4    wire_MB=980.8   roce_frames=244349  mean_compute_ms=25.1   mean_allreduce_ms=1772   leaf_discards=101033 checksums_match=yes
+delay=20ms       params=2101249  grad_MB=8.4    wire_MB=869.4   roce_frames=216855  mean_compute_ms=23.4   mean_allreduce_ms=1915   leaf_discards=83371  checksums_match=yes

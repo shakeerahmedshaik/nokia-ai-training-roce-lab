@@ -1,0 +1,61 @@
+12:27:15.853 leaf1 ethernet-1/1 admin-state disable
+10.10.2.0/24         bgp          0        170     >        192.168.12.1(route:local)
+192.168.12.0/31      local        0        0       >        192.168.12.0(ethernet-1/2.0)
+12:27:38.037 leaf1 ethernet-1/1 admin-state enable
+run finished after 46 s
+step=0   allreduce_ms=800.8
+step=1   allreduce_ms=802.3
+step=2   allreduce_ms=805.6
+step=3   allreduce_ms=773.8
+step=4   allreduce_ms=780.3
+step=5   allreduce_ms=771.9
+step=6   allreduce_ms=820.3
+step=7   allreduce_ms=821.0
+step=8   allreduce_ms=834.3
+step=9   allreduce_ms=805.0
+step=10  allreduce_ms=828.0
+step=11  allreduce_ms=783.0
+step=12  allreduce_ms=816.6
+step=13  allreduce_ms=2965.3
+step=14  allreduce_ms=852.1
+step=15  allreduce_ms=833.2
+step=16  allreduce_ms=829.9
+step=17  allreduce_ms=804.7
+step=18  allreduce_ms=786.5
+step=19  allreduce_ms=806.5
+step=20  allreduce_ms=804.0
+step=21  allreduce_ms=865.9
+step=22  allreduce_ms=795.7
+step=23  allreduce_ms=910.8
+step=24  allreduce_ms=769.4
+step=25  allreduce_ms=810.6
+step=26  allreduce_ms=846.5
+step=27  allreduce_ms=772.7
+step=28  allreduce_ms=863.4
+step=29  allreduce_ms=886.8
+step=30  allreduce_ms=848.4
+step=31  allreduce_ms=812.0
+step=32  allreduce_ms=786.2
+step=33  allreduce_ms=957.2
+step=34  allreduce_ms=835.6
+step=35  allreduce_ms=775.0
+step=36  allreduce_ms=835.6
+step=37  allreduce_ms=806.4
+step=38  allreduce_ms=797.6
+step=39  allreduce_ms=836.3
+      2 final model_checksum=15.2648585702
+10.10.2.0/24         bgp          0        170     >        192.168.12.1(route:local)
+192.168.11.0/31      local        0        0       >        192.168.11.0(ethernet-1/1.0)
+worker1 rxe_w1 sent_pkts 2430672 rcvd_pkts 1412083 duplicate_request 50418 out_of_seq_request 10679 rcvd_seq_err 10094 retry_exceeded_err 0 completer_retry_err 13593 
+worker2 rxe_w2 sent_pkts 2024226 rcvd_pkts 1562050 duplicate_request 53753 out_of_seq_request 10678 rcvd_seq_err 10043 retry_exceeded_err 0 completer_retry_err 12409 
+leaf1 ethernet-1/10 in-discarded-packets=613431 in-error-packets=11524 
+leaf2 ethernet-1/10 in-discarded-packets=574296 in-error-packets=9841 
+worker1 rxe_w1 sent_pkts 2526290 rcvd_pkts 1501510 duplicate_request 51031 out_of_seq_request 10763 rcvd_seq_err 10189 retry_exceeded_err 0 completer_retry_err 13708 
+worker2 rxe_w2 sent_pkts 2119871 rcvd_pkts 1657477 duplicate_request 57017 out_of_seq_request 10808 rcvd_seq_err 10105 retry_exceeded_err 0 completer_retry_err 12495 
+leaf1 ethernet-1/10 in-discarded-packets=613451 in-error-packets=11524 
+leaf2 ethernet-1/10 in-discarded-packets=574320 in-error-packets=9841 
+10.10.2.0/24         bgp          0        170     >        192.168.12.1(route:local)
+192.168.11.0/31      local        0        0       >        192.168.11.0(ethernet-1/1.0)
+--- ~60 s after re-enable: BGP to spine1 re-established, 10.10.2.0/24 back to 2 ECMP next-hops (192.168.11.1, 192.168.12.1)
+10.10.2.0/24         bgp          0        170     >        192.168.11.1(route:local)                                                                                                               
+                                                            192.168.12.1(route:local)

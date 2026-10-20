@@ -1,0 +1,52 @@
+===== worker1 /tmp/train.log
+rank=0 transport=roce params=2101249 gradient_bytes_FP32=8404996 batch=32 steps=20
+rank=0 roce dev=rxe_w1 gid_index=1 gid=0000:0000:0000:0000:0000:ffff:0a0a:0102 qpn=[36, 37] peer_gid=0000:0000:0000:0000:0000:ffff:0a0a:0202 peer_qpn=[34, 35] channels=2 tclass=0x6a (DSCP 26, ECN 2)
+rank=0 initial model_checksum=14.7218001951 eval_loss=1.104860
+rank=0 probe local_grad_checksum=-92.9500525515
+rank=0 step=0 loss=0.508393 synced_grad_checksum=-194.0036913864 compute_ms=13.5 allreduce_ms=1337.7 reduce_scatter_ms=662.4 all_gather_ms=644.6 elapsed_ms=1381.9
+rank=0 step=1 loss=1.472786 synced_grad_checksum=97.3378790052 compute_ms=27.7 allreduce_ms=1108.8 reduce_scatter_ms=509.1 all_gather_ms=573.6 elapsed_ms=1162.4
+rank=0 step=2 loss=0.873579 synced_grad_checksum=-5.9369845511 compute_ms=21.3 allreduce_ms=1466.0 reduce_scatter_ms=729.2 all_gather_ms=688.6 elapsed_ms=1509.7
+rank=0 step=3 loss=1.035881 synced_grad_checksum=130.0178241779 compute_ms=14.1 allreduce_ms=1273.2 reduce_scatter_ms=589.1 all_gather_ms=662.5 elapsed_ms=1310.2
+rank=0 step=4 loss=0.518909 synced_grad_checksum=8.3988217785 compute_ms=13.7 allreduce_ms=1098.9 reduce_scatter_ms=515.5 all_gather_ms=560.1 elapsed_ms=1141.0
+rank=0 step=5 loss=1.159614 synced_grad_checksum=130.4952996776 compute_ms=16.7 allreduce_ms=1300.8 reduce_scatter_ms=788.5 all_gather_ms=480.0 elapsed_ms=1342.0
+rank=0 step=6 loss=0.855181 synced_grad_checksum=-189.4285335570 compute_ms=14.8 allreduce_ms=1149.6 reduce_scatter_ms=676.8 all_gather_ms=447.3 elapsed_ms=1190.4
+rank=0 step=7 loss=0.553781 synced_grad_checksum=103.7682563250 compute_ms=14.7 allreduce_ms=1037.8 reduce_scatter_ms=471.2 all_gather_ms=543.8 elapsed_ms=1075.9
+rank=0 step=8 loss=0.808671 synced_grad_checksum=-73.9872778765 compute_ms=14.1 allreduce_ms=1606.3 reduce_scatter_ms=687.5 all_gather_ms=892.9 elapsed_ms=1644.9
+rank=0 step=9 loss=0.744295 synced_grad_checksum=-116.1885982252 compute_ms=14.7 allreduce_ms=1102.4 reduce_scatter_ms=509.2 all_gather_ms=566.2 elapsed_ms=1140.5
+rank=0 step=10 loss=0.851031 synced_grad_checksum=254.5075764648 compute_ms=13.8 allreduce_ms=1225.4 reduce_scatter_ms=575.7 all_gather_ms=619.2 elapsed_ms=1265.1
+rank=0 step=11 loss=0.823249 synced_grad_checksum=-56.6799877704 compute_ms=23.3 allreduce_ms=1382.4 reduce_scatter_ms=644.6 all_gather_ms=707.8 elapsed_ms=1439.0
+rank=0 step=12 loss=1.118207 synced_grad_checksum=-60.0951224033 compute_ms=22.3 allreduce_ms=1043.7 reduce_scatter_ms=663.7 all_gather_ms=345.3 elapsed_ms=1093.0
+rank=0 step=13 loss=1.312105 synced_grad_checksum=-84.3588497967 compute_ms=13.5 allreduce_ms=942.5 reduce_scatter_ms=488.7 all_gather_ms=426.6 elapsed_ms=984.5
+rank=0 step=14 loss=1.069472 synced_grad_checksum=178.7981362888 compute_ms=19.3 allreduce_ms=1252.4 reduce_scatter_ms=634.1 all_gather_ms=587.1 elapsed_ms=1296.4
+rank=0 step=15 loss=0.769788 synced_grad_checksum=-125.0850427784 compute_ms=23.3 allreduce_ms=1149.2 reduce_scatter_ms=577.6 all_gather_ms=546.8 elapsed_ms=1198.7
+rank=0 step=16 loss=0.908612 synced_grad_checksum=-83.4648808312 compute_ms=17.1 allreduce_ms=1130.8 reduce_scatter_ms=543.5 all_gather_ms=555.6 elapsed_ms=1176.7
+rank=0 step=17 loss=0.786235 synced_grad_checksum=-177.9970862665 compute_ms=18.0 allreduce_ms=1349.6 reduce_scatter_ms=609.5 all_gather_ms=703.8 elapsed_ms=1395.3
+rank=0 step=18 loss=1.181942 synced_grad_checksum=76.2349165541 compute_ms=15.8 allreduce_ms=1085.1 reduce_scatter_ms=552.7 all_gather_ms=501.2 elapsed_ms=1132.2
+rank=0 step=19 loss=1.273046 synced_grad_checksum=287.0553281007 compute_ms=16.1 allreduce_ms=1087.2 reduce_scatter_ms=546.0 all_gather_ms=502.8 elapsed_ms=1122.4
+rank=0 final model_checksum=14.4236342852 eval_loss=1.041862
+===== worker2 /tmp/train.log
+rank=1 transport=roce params=2101249 gradient_bytes_FP32=8404996 batch=32 steps=20
+rank=1 roce dev=rxe_w2 gid_index=1 gid=0000:0000:0000:0000:0000:ffff:0a0a:0202 qpn=[34, 35] peer_gid=0000:0000:0000:0000:0000:ffff:0a0a:0102 peer_qpn=[36, 37] channels=2 tclass=0x6a (DSCP 26, ECN 2)
+rank=1 initial model_checksum=14.7218001951 eval_loss=1.104860
+rank=1 probe local_grad_checksum=-295.0573299934
+rank=1 step=0 loss=0.750062 synced_grad_checksum=-194.0036913864 compute_ms=13.6 allreduce_ms=1314.0 reduce_scatter_ms=636.1 all_gather_ms=637.6 elapsed_ms=1359.6
+rank=1 step=1 loss=0.934458 synced_grad_checksum=97.3378790052 compute_ms=17.6 allreduce_ms=1110.9 reduce_scatter_ms=505.9 all_gather_ms=576.2 elapsed_ms=1158.9
+rank=1 step=2 loss=1.376718 synced_grad_checksum=-5.9369845511 compute_ms=16.6 allreduce_ms=1441.3 reduce_scatter_ms=723.4 all_gather_ms=689.0 elapsed_ms=1478.7
+rank=1 step=3 loss=1.406034 synced_grad_checksum=130.0178241779 compute_ms=14.5 allreduce_ms=1297.3 reduce_scatter_ms=613.1 all_gather_ms=657.8 elapsed_ms=1335.8
+rank=1 step=4 loss=1.010662 synced_grad_checksum=8.3988217785 compute_ms=14.4 allreduce_ms=1102.6 reduce_scatter_ms=508.7 all_gather_ms=558.5 elapsed_ms=1134.8
+rank=1 step=5 loss=0.844398 synced_grad_checksum=130.4952996776 compute_ms=13.9 allreduce_ms=1305.7 reduce_scatter_ms=795.4 all_gather_ms=487.2 elapsed_ms=1343.6
+rank=1 step=6 loss=1.087097 synced_grad_checksum=-189.4285335570 compute_ms=13.6 allreduce_ms=1162.7 reduce_scatter_ms=687.8 all_gather_ms=447.8 elapsed_ms=1201.3
+rank=1 step=7 loss=1.268345 synced_grad_checksum=103.7682563250 compute_ms=14.2 allreduce_ms=1035.6 reduce_scatter_ms=468.1 all_gather_ms=541.8 elapsed_ms=1074.0
+rank=1 step=8 loss=1.117054 synced_grad_checksum=-73.9872778765 compute_ms=14.9 allreduce_ms=1615.2 reduce_scatter_ms=682.4 all_gather_ms=891.3 elapsed_ms=1649.7
+rank=1 step=9 loss=0.964051 synced_grad_checksum=-116.1885982252 compute_ms=16.9 allreduce_ms=1090.2 reduce_scatter_ms=496.0 all_gather_ms=569.1 elapsed_ms=1131.8
+rank=1 step=10 loss=0.823476 synced_grad_checksum=254.5075764648 compute_ms=14.8 allreduce_ms=1243.1 reduce_scatter_ms=575.0 all_gather_ms=618.8 elapsed_ms=1287.5
+rank=1 step=11 loss=1.250176 synced_grad_checksum=-56.6799877704 compute_ms=23.8 allreduce_ms=1358.7 reduce_scatter_ms=606.4 all_gather_ms=719.7 elapsed_ms=1418.1
+rank=1 step=12 loss=0.595222 synced_grad_checksum=-60.0951224033 compute_ms=39.8 allreduce_ms=1026.2 reduce_scatter_ms=639.0 all_gather_ms=347.1 elapsed_ms=1096.0
+rank=1 step=13 loss=1.033256 synced_grad_checksum=-84.3588497967 compute_ms=17.9 allreduce_ms=931.8 reduce_scatter_ms=479.3 all_gather_ms=424.0 elapsed_ms=976.7
+rank=1 step=14 loss=0.926091 synced_grad_checksum=178.7981362888 compute_ms=19.5 allreduce_ms=1248.8 reduce_scatter_ms=631.9 all_gather_ms=586.3 elapsed_ms=1292.7
+rank=1 step=15 loss=1.043618 synced_grad_checksum=-125.0850427784 compute_ms=14.7 allreduce_ms=1153.0 reduce_scatter_ms=581.3 all_gather_ms=549.2 elapsed_ms=1192.5
+rank=1 step=16 loss=1.522367 synced_grad_checksum=-83.4648808312 compute_ms=23.2 allreduce_ms=1124.2 reduce_scatter_ms=543.2 all_gather_ms=559.2 elapsed_ms=1170.5
+rank=1 step=17 loss=0.832977 synced_grad_checksum=-177.9970862665 compute_ms=24.5 allreduce_ms=1351.6 reduce_scatter_ms=618.4 all_gather_ms=701.1 elapsed_ms=1406.1
+rank=1 step=18 loss=0.946427 synced_grad_checksum=76.2349165541 compute_ms=23.0 allreduce_ms=1075.3 reduce_scatter_ms=545.5 all_gather_ms=502.0 elapsed_ms=1127.4
+rank=1 step=19 loss=1.220537 synced_grad_checksum=287.0553281007 compute_ms=17.3 allreduce_ms=1080.6 reduce_scatter_ms=547.8 all_gather_ms=506.9 elapsed_ms=1124.2
+rank=1 final model_checksum=14.4236342852 eval_loss=1.041862

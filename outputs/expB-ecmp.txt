@@ -1,0 +1,6 @@
+ECMP placement during Experiment B (spine interface counter deltas)
+spine   port          towards  in_MB(from leaf)  out_MB(to leaf)
+spine1  ethernet-1/1  leaf1               168.4            168.1
+spine1  ethernet-1/2  leaf2               168.1            168.4
+spine2  ethernet-1/1  leaf1               173.0            167.2
+spine2  ethernet-1/2  leaf2               167.2            173.0

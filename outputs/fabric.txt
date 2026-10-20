@@ -1,0 +1,19 @@
+### leaf1 BGP
+| default              | 192.168.11.1                   | spines               | S      | 65100      | established      | 0d:0h:18m:3s     | ipv4-unicast [6/4/6]                         |
+| default              | 192.168.12.1                   | spines               | S      | 65100      | established      | 0d:0h:17m:59s    | ipv4-unicast [6/4/8]                         |
+2 configured neighbors, 2 configured sessions are established, 0 disabled peers
+### leaf2 BGP
+| default              | 192.168.21.1                   | spines               | S      | 65100      | established      | 0d:0h:18m:5s     | ipv4-unicast [6/4/6]                         |
+| default              | 192.168.22.1                   | spines               | S      | 65100      | established      | 0d:0h:18m:2s     | ipv4-unicast [6/4/8]                         |
+2 configured neighbors, 2 configured sessions are established, 0 disabled peers
+### leaf1 route to worker2 subnet
+10.10.2.0/24         bgp          0        170     >        192.168.11.1(route:local)                                                                                                               
+                                                            192.168.12.1(route:local)
+### leaf2 route to worker1 subnet
+10.10.1.0/24         bgp          0        170     >        192.168.21.1(route:local)                                                                                                               
+                                                            192.168.22.1(route:local)
+### spine counters
+spine1  ethernet-1/1  in-packets=132 in-octets=17399 out-packets=130 out-octets=17299 
+spine1  ethernet-1/2  in-packets=127 in-octets=17049 out-packets=124 out-octets=16879 
+spine2  ethernet-1/1  in-packets=125 in-octets=16783 out-packets=126 out-octets=17037 
+spine2  ethernet-1/2  in-packets=129 in-octets=17059 out-packets=126 out-octets=17037 

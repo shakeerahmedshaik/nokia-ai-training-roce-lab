@@ -1,0 +1,8 @@
+===== worker1 /tmp/allreduce.log
+rank=0 world=2 transport=roce before=2.0
+rank=0 roce dev=rxe_w1 gid_index=1 gid=0000:0000:0000:0000:0000:ffff:0a0a:0102 qpn=[20, 21] peer_gid=0000:0000:0000:0000:0000:ffff:0a0a:0202 peer_qpn=[20, 21] channels=2 tclass=0x6a (DSCP 26, ECN 2)
+rank=0 after=3.0
+===== worker2 /tmp/allreduce.log
+rank=1 world=2 transport=roce before=4.0
+rank=1 roce dev=rxe_w2 gid_index=1 gid=0000:0000:0000:0000:0000:ffff:0a0a:0202 qpn=[20, 21] peer_gid=0000:0000:0000:0000:0000:ffff:0a0a:0102 peer_qpn=[20, 21] channels=2 tclass=0x6a (DSCP 26, ECN 2)
+rank=1 after=3.0

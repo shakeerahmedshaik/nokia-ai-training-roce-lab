@@ -1,0 +1,34 @@
+set / interface ethernet-1/1 admin-state enable
+set / interface ethernet-1/1 subinterface 0 ip-mtu 9000
+set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+set / interface ethernet-1/1 subinterface 0 ipv4 address 192.168.21.0/31
+set / interface ethernet-1/2 admin-state enable
+set / interface ethernet-1/2 subinterface 0 ip-mtu 9000
+set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+set / interface ethernet-1/2 subinterface 0 ipv4 address 192.168.22.0/31
+set / interface ethernet-1/10 admin-state enable
+set / interface ethernet-1/10 subinterface 0 ip-mtu 9000
+set / interface ethernet-1/10 subinterface 0 ipv4 admin-state enable
+set / interface ethernet-1/10 subinterface 0 ipv4 address 10.10.2.1/24
+set / interface system0 admin-state enable
+set / interface system0 subinterface 0 ipv4 admin-state enable
+set / interface system0 subinterface 0 ipv4 address 10.0.1.2/32
+
+set / network-instance default interface ethernet-1/1.0
+set / network-instance default interface ethernet-1/2.0
+set / network-instance default interface ethernet-1/10.0
+set / network-instance default interface system0.0
+
+set / routing-policy policy ACCEPT-ALL default-action policy-result accept
+
+set / network-instance default protocols bgp admin-state enable
+set / network-instance default protocols bgp autonomous-system 65002
+set / network-instance default protocols bgp router-id 10.0.1.2
+set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+set / network-instance default protocols bgp afi-safi ipv4-unicast multipath ebgp maximum-paths 2
+set / network-instance default protocols bgp group spines import-policy [ ACCEPT-ALL ]
+set / network-instance default protocols bgp group spines export-policy [ ACCEPT-ALL ]
+set / network-instance default protocols bgp neighbor 192.168.21.1 peer-group spines
+set / network-instance default protocols bgp neighbor 192.168.21.1 peer-as 65100
+set / network-instance default protocols bgp neighbor 192.168.22.1 peer-group spines
+set / network-instance default protocols bgp neighbor 192.168.22.1 peer-as 65100

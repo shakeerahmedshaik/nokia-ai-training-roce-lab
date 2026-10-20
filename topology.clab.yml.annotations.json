@@ -1,0 +1,18 @@
+{
+  "freeTextAnnotations": [],
+  "freeShapeAnnotations": [],
+  "trafficRateAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    { "id": "spine1", "interfacePattern": "e1-{n}", "position": { "x": 200, "y": 0 } },
+    { "id": "spine2", "interfacePattern": "e1-{n}", "position": { "x": 400, "y": 0 } },
+    { "id": "leaf1", "interfacePattern": "e1-{n}", "position": { "x": 200, "y": 150 } },
+    { "id": "leaf2", "interfacePattern": "e1-{n}", "position": { "x": 400, "y": 150 } },
+    { "id": "worker1", "position": { "x": 200, "y": 300 } },
+    { "id": "worker2", "position": { "x": 400, "y": 300 } }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {}
+}

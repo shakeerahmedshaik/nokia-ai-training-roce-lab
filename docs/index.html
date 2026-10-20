@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributed AI training over RoCEv2: the packet lab, end to end</title>
+<style>
+  :root {
+    --bg: #ffffff; --elev: #f6f7f9; --fill: #eef0f3; --fill2: #e2e5ea;
+    --text: #1d2125; --text2: #4b535c; --text3: #7a838d;
+    --stroke: #c9ced5; --stroke2: #dde1e6;
+    --qpa: #2f6fd6; --qpb: #d9822b; --ok: #2e8b57; --warn: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17191c; --elev: #1f2226; --fill: #24282d; --fill2: #30353b;
+      --text: #e6e8eb; --text2: #b3b9c1; --text3: #858d97;
+      --stroke: #3d434a; --stroke2: #2d3237;
+      --qpa: #5b9cf5; --qpb: #f0a35a; --ok: #5cc28a; --warn: #e0b04f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  h2 { font-size: 18px; margin: 0 0 8px; }
+  h3 { font-size: 13px; margin: 0 0 8px; color: var(--text2); font-weight: 600; }
+  p { margin: 0 0 8px; }
+  .sec { color: var(--text2); }
+  .cap { color: var(--text3); font-size: 12px; margin-top: 6px; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  code { background: var(--fill); padding: 1px 4px; border-radius: 4px; }
+  hr { border: 0; border-top: 1px solid var(--stroke2); margin: 28px 0; }
+  section { margin-bottom: 28px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 32px; margin: 20px 0 0; }
+  .stat .v { font-size: 20px; font-weight: 600; }
+  .stat .l { font-size: 12px; color: var(--text3); }
+  .stat.warn .v { color: var(--warn); } .stat.ok .v { color: var(--ok); }
+  .grid2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+  .grid-topo { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 24px; align-items: start; }
+  .grid-io { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .grid2, .grid-topo, .grid-io { grid-template-columns: 1fr; } }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+  .pill { border: 1px solid var(--stroke); background: transparent; color: var(--text2);
+    border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .pill.on { background: var(--fill2); color: var(--text); border-color: var(--fill2); }
+  .card { border: 1px solid var(--stroke); border-radius: 8px; overflow: hidden; }
+  .card-h { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px;
+    font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--stroke2); background: var(--elev); }
+  .card-h .tag { font-weight: 400; color: var(--text3); }
+  .card-b { padding: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--text3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--stroke); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--stroke2); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .framed { border: 1px solid var(--stroke); border-radius: 8px; overflow-x: auto; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); margin-right: 6px; vertical-align: middle; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text2); margin-top: 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .frame { display: flex; border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+  .seg { flex: 1 1 0; min-width: 52px; padding: 8px 6px; text-align: center; cursor: pointer;
+    background: var(--elev); color: var(--text2); border-left: 1px solid var(--stroke2); }
+  .seg:first-child { border-left: 0; }
+  .seg.payload { flex-grow: 6; background: var(--fill); }
+  .seg.small { flex-grow: 1; }
+  .seg.on { background: var(--fill2); color: var(--text); }
+  .seg b { display: block; font-size: 12px; } .seg i { font-style: normal; font-size: 11px; color: var(--text3); }
+  .seginfo { display: grid; grid-template-columns: 1fr auto; gap: 16px; margin-top: 12px; align-items: start; }
+  .callout { border: 1px solid var(--stroke); border-left: 3px solid var(--warn); border-radius: 6px; padding: 10px 14px; background: var(--elev); }
+  .callout b { display: block; margin-bottom: 4px; }
+  pre { background: var(--fill); border: 1px solid var(--stroke2); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 0; line-height: 1.6; }
+  svg text { font-family: inherit; }
+  .chart { width: 100%; height: auto; display: block; }
+  .tip { position: fixed; pointer-events: none; background: var(--elev); border: 1px solid var(--stroke);
+    border-radius: 6px; padding: 4px 8px; font-size: 12px; display: none; z-index: 10; }
+  footer { color: var(--text3); font-size: 12px; }
+  a { color: var(--qpa); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Distributed AI training over RoCEv2: the packet lab, end to end</h1>
+  <p class="sec">Two PyTorch CPU workers train one MLP. Every step, their different local gradients are averaged by an
+    NCCL-style ring AllReduce that moves as real RoCEv2 (Soft-RoCE <code>rxe</code>) across a 2-leaf / 2-spine SR Linux
+    Clos (<code>ixr-h5-64o</code>, eBGP, 2-way ECMP). All numbers below come from the captures and counters in
+    <code>outputs/</code> of this repository.</p>
+  <div class="stats">
+    <div class="stat"><div class="v">8.4 MB</div><div class="l">FP32 gradient per step (2,101,249 params)</div></div>
+    <div class="stat"><div class="v">841 MB</div><div class="l">RoCEv2 on worker1 eth1, 20 steps</div></div>
+    <div class="stat"><div class="v">2.9 KB</div><div class="l">TCP, bootstrap only</div></div>
+    <div class="stat warn"><div class="v">20 ms / 1.1 s</div><div class="l">compute vs AllReduce per step</div></div>
+    <div class="stat ok"><div class="v">identical</div><div class="l">model checksum on both ranks</div></div>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2>One training step on the wire</h2>
+    <p class="sec">Pick a phase. The diagram shows which links carry frames in that phase; the two colors are the two RC
+      queue pairs, which hash onto different spines because each QP has its own UDP source port.</p>
+    <div class="pills" id="phase-pills"></div>
+    <div class="grid-topo">
+      <div>
+        <svg id="topo" class="chart" viewBox="0 0 720 340"></svg>
+        <div class="legend">
+          <span><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--qpa)" stroke-width="2.5"/></svg>QP channel 0 (sport 50376)</span>
+          <span><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--qpb)" stroke-width="2.5"/></svg>QP channel 1 (sport 50447)</span>
+          <span><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--text2)" stroke-width="2.5" stroke-dasharray="4 3"/></svg>RC ACK / NAK</span>
+          <span><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--text3)" stroke-width="2.5" stroke-dasharray="4 3"/></svg>TCP bootstrap</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span id="ph-title"></span><span class="tag" id="ph-wire"></span></div>
+        <div class="card-b">
+          <p id="ph-summary"></p>
+          <table><thead><tr><th>Captured detail</th><th>Value</th></tr></thead><tbody id="ph-fields"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Hop by hop: worker1 to worker2</h2>
+    <div class="framed"><table>
+      <thead><tr><th>Hop</th><th>TTL out</th><th>What happens to a RoCEv2 frame</th></tr></thead>
+      <tbody>
+        <tr><td>worker1 rxe_w1</td><td>64</td><td>rxe segments the WRITE into 4096 B packets, sets traffic class 0x6a (DSCP 26, ECT(0)), computes the ICRC, sends on eth1 (MTU 9000, offloads off)</td></tr>
+        <tr><td>leaf1 ethernet-1/10 in</td><td>63</td><td>Classifier ROCE maps DSCP 26 to fc3; ECMP hashes the 5-tuple (UDP sport differs per QP) to spine1 or spine2. Ingress discards happen here when rxe bursts faster than the software datapath</td></tr>
+        <tr><td>spine1 or spine2</td><td>62</td><td>Single best path to 10.10.2.0/24 via leaf2; egress queue unicast-3 (WRED with ECN 5-20 %)</td></tr>
+        <tr><td>leaf2 ethernet-1/10 out</td><td>61</td><td>Routes onto the worker2 subnet, queue unicast-3. DSCP 48 (CNP) would go to strict-priority unicast-6</td></tr>
+        <tr><td>worker2 rxe_w2</td><td>—</td><td>Checks ICRC and PSN, places payload into the registered MR at RETH VA + offset, consumes a recv WQE on the immediate, returns ACK/NAK</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Frames arriving at worker1 from worker2 show TTL 61 (82,341 frames), confirming three routed hops. Source: <code>outputs/expB-analysis.txt</code>.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Frame anatomy</h2>
+    <p class="sec">Each BTH opcode seen in the capture. Click a header to see what it carries and the values observed.
+      Header widths are not to scale; a 4096 B payload is 290 times the size of the Ethernet header.</p>
+    <div class="pills" id="frame-pills"></div>
+    <div class="frame" id="frame"></div>
+    <div class="seginfo">
+      <div><p><b id="seg-name"></b></p><p class="sec" id="seg-note"></p></div>
+      <div class="stats" style="margin:0">
+        <div class="stat"><div class="v" id="fr-total"></div><div class="l">Frame on the wire (no FCS)</div></div>
+        <div class="stat"><div class="v" id="fr-cap"></div><div class="l" id="fr-cap-l"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Capture worksheet, Experiment B</h2>
+    <p class="cap">Source: <code>captures/train.pcap</code> on worker1 eth1 (both directions), 27.4 s, 20 steps, hidden=2048, decoded with <code>scripts/analyze.sh</code>.</p>
+    <div class="grid-io" style="margin-top:14px">
+      <div>
+        <h3>RoCEv2 throughput per 0.5 s bucket (MB)</h3>
+        <svg id="ch-io" class="chart"></svg>
+        <p class="cap">x-axis: capture time (s). About 32 MB/s (roughly 260 Mb/s) across both directions, retransmissions included. Bursts track the 1.1 s steps.</p>
+      </div>
+      <div>
+        <h3>Ideal vs captured frames by opcode</h3>
+        <div class="framed"><table>
+          <thead><tr><th>Opcode</th><th class="r">Ideal</th><th class="r">Captured</th><th class="r">Ratio</th></tr></thead>
+          <tbody>
+            <tr><td>6 WRITE First</td><td class="r">160</td><td class="r">182</td><td class="r">1.1x</td></tr>
+            <tr><td><span class="dot"></span>7 WRITE Middle</td><td class="r">81,920</td><td class="r">202,165</td><td class="r">2.5x</td></tr>
+            <tr><td><span class="dot"></span>9 WRITE Last w/ Imm</td><td class="r">160</td><td class="r">375</td><td class="r">2.3x</td></tr>
+            <tr><td>17 Acknowledge</td><td class="r">—</td><td class="r">7,589</td><td class="r">—</td></tr>
+          </tbody>
+        </table></div>
+        <p class="cap">Ideal = 20 steps x 2 phases x 2 QPs x 2 directions = 160 stripes, each 1 First + 512 Middle + 1 Last. The surplus is go-back-N retransmission.</p>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:20px">
+      <div>
+        <h3>UDP conversations (one per QP and direction)</h3>
+        <div class="framed"><table>
+          <thead><tr><th>Source</th><th>Destination</th><th class="r">Frames</th><th class="r">Bytes</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">10.10.1.2:50447</td><td class="mono">10.10.2.2:4791</td><td class="r">64,636</td><td class="r">259 MB</td></tr>
+            <tr><td class="mono">10.10.1.2:50376</td><td class="mono">10.10.2.2:4791</td><td class="r">63,334</td><td class="r">254 MB</td></tr>
+            <tr><td class="mono">10.10.2.2:50376</td><td class="mono">10.10.1.2:4791</td><td class="r">41,473</td><td class="r">163 MB</td></tr>
+            <tr><td class="mono">10.10.2.2:50447</td><td class="mono">10.10.1.2:4791</td><td class="r">40,868</td><td class="r">162 MB</td></tr>
+            <tr><td class="mono">10.10.2.2:41774</td><td class="mono">10.10.1.2:29500 (TCP)</td><td class="r">35</td><td class="r">2.9 KB</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h3>Marking and frame sizes</h3>
+        <div class="framed"><table>
+          <thead><tr><th>Observation</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>DSCP / ECN, worker1 → worker2</td><td>26 / 10 (ECT(0)), TTL 64, 127,970 frames</td></tr>
+            <tr><td>DSCP / ECN, worker2 → worker1</td><td>26 / 10 (ECT(0)), TTL 61, 82,341 frames</td></tr>
+            <tr><td>CE marks</td><td>0, the software datapath does not model queue-depth ECN</td></tr>
+            <tr><td>2560-5119 B (4154 / 4170)</td><td>202,347 frames, 96.2 %</td></tr>
+            <tr><td>40-79 B (ACK 62, Last 66)</td><td>7,991 frames, 3.8 %</td></tr>
+            <tr><td>80-319 B (TCP, control)</td><td>12 frames</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Where the bytes go</h2>
+    <div class="grid2">
+      <div>
+        <h3>RoCEv2 MB sent per rank vs the ideal</h3>
+        <svg id="ch-sent" class="chart"></svg>
+        <p class="cap">Ideal = 8.4 MB x 20 steps per rank. Source: UDP conversations above.</p>
+      </div>
+      <div>
+        <h3>ECMP split: MB into each spine from each leaf</h3>
+        <svg id="ch-ecmp" class="chart"></svg>
+        <p class="cap">Spine interface counter deltas over Experiment B (<code>outputs/expB-ecmp.txt</code>). Only 341 MB of worker1's 513 MB reached the spines; the rest died at leaf1 ingress.</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:16px">
+      <b>Lossy RoCE without PFC</b>
+      rxe sends each 2.1 MB stripe as fast as the veth allows, which exceeds the SR Linux software datapath (about 75 Mb/s
+      per flow in <code>ib_write_bw</code>). leaf1 and leaf2 <code>ethernet-1/10</code> discarded 38,402 and 36,270 frames
+      during the run. Every drop causes a PSN gap, a NAK and a resend of everything after the gap.
+    </div>
+  </section>
+
+  <section>
+    <h2>Per-step timing</h2>
+    <div class="grid2">
+      <div>
+        <h3>Experiment B: compute vs AllReduce per step (ms, rank 0)</h3>
+        <svg id="ch-expb" class="chart"></svg>
+        <p class="cap">x-axis: training step. Source: <code>outputs/expB-train.txt</code>, unpaced.</p>
+      </div>
+      <div>
+        <h3>Spine link failure: AllReduce per step (ms), paced at 100 Mbit/s</h3>
+        <svg id="ch-fail" class="chart"></svg>
+        <p class="cap">x-axis: training step. leaf1 ethernet-1/1 disabled at T+15 s; step 13 takes 2,965 ms (RC timeout, then resend via spine2). Re-enabled 22 s later, after which BGP and 2-way ECMP return. Source: <code>outputs/failover.txt</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The one knob that matters: sender pacing</h2>
+    <div class="grid2">
+      <div>
+        <h3>AllReduce per step (ms) by tbf rate on both workers</h3>
+        <svg id="ch-pace" class="chart"></svg>
+      </div>
+      <div>
+        <h3>Leaf ingress discards over 20 steps</h3>
+        <svg id="ch-disc" class="chart"></svg>
+      </div>
+    </div>
+    <p class="cap">Source: <code>outputs/sweeps.txt</code>, hidden=2048, 20 steps. Pacing just above the bottleneck removes the drops, cuts wire bytes from 968 MB to 363 MB and halves the AllReduce, which is what DCQCN or PFC buys a real fabric.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Reproduce the captures</h2>
+<pre class="mono">cd ai-training-lab
+bash scripts/capture.sh start train          # tcpdump on worker1 eth1
+bash run.sh train.py --steps 20 --features 1024 --hidden 2048 --wait
+bash scripts/capture.sh stop train
+bash scripts/analyze.sh captures/train.pcap  # totals, conversations, opcodes, DSCP/ECN/TTL, I/O graph
+bash scripts/rxe-stats.sh                    # rxe retransmit and sequence-error counters
+bash scripts/fabric.sh counters              # leaf discards, spine ECMP bytes
+
+# useful tshark display filters
+udp.dstport == 4791                 # all RoCEv2
+infiniband.bth.opcode == 17         # RC ACK / NAK
+infiniband.bth.destqp == 0x000022   # one QP
+ip.dsfield.dscp == 26 &amp;&amp; ip.dsfield.ecn == 3   # CE marks (none here)</pre>
+  </section>
+
+  <footer>Companion page to the ai-training-lab README. Self-contained, no external scripts.</footer>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (parent, x, y, s, attrs = {}) => {
+    const t = el("text", { x, y, ...attrs }, parent);
+    t.textContent = s;
+    return t;
+  };
+  const fmt = (v) => v >= 1000 ? Math.round(v).toLocaleString("en-US") : String(+v.toFixed(1));
+  const tip = document.getElementById("tip");
+  const showTip = (ev, html) => { tip.innerHTML = html; tip.style.display = "block";
+    tip.style.left = ev.clientX + 12 + "px"; tip.style.top = ev.clientY + 12 + "px"; };
+  const hideTip = () => { tip.style.display = "none"; };
+
+  // ---------- topology + phases ----------
+  const N = {
+    spine1: [190, 46, "spine1", "AS65100 · 10.0.0.1"],
+    spine2: [530, 46, "spine2", "AS65100 · 10.0.0.2"],
+    leaf1: [190, 166, "leaf1", "AS65001 · gw 10.10.1.1"],
+    leaf2: [530, 166, "leaf2", "AS65002 · gw 10.10.2.1"],
+    worker1: [190, 286, "worker1", "rank 0 · 10.10.1.2 · rxe_w1"],
+    worker2: [530, 286, "worker2", "rank 1 · 10.10.2.2 · rxe_w2"],
+  };
+  const E = [
+    ["spine1", "leaf1", "192.168.11.0/31"], ["spine2", "leaf1", "192.168.12.0/31"],
+    ["spine1", "leaf2", "192.168.21.0/31"], ["spine2", "leaf2", "192.168.22.0/31"],
+    ["leaf1", "worker1", "e1-10"], ["leaf2", "worker2", "e1-10"],
+  ];
+  const S1F = ["worker1", "leaf1", "spine1", "leaf2", "worker2"];
+  const S2F = ["worker1", "leaf1", "spine2", "leaf2", "worker2"];
+  const S1R = [...S1F].reverse(), S2R = [...S2F].reverse();
+  const writes = [[S1F, "qpA"], [S2F, "qpB"], [S1R, "qpA"], [S2R, "qpB"]];
+
+  const PHASES = [
+    { t: "1. Bootstrap", w: "35 TCP frames · 2,927 B", flows: [[S1R, "tcp"], [S2R, "tcp"]],
+      s: "Rank 1 connects to the TCPStore on rank 0 (10.10.1.2:29500), exactly like NCCL's out-of-band bootstrap. Each rank publishes the identity the peer needs to address its memory. This is the only TCP in the whole job.",
+      f: [["Conversation", "10.10.2.2:41774 → 10.10.1.2:29500"],
+          ["Published per rank", "GID (::ffff:10.10.x.2, index 1), QPN per channel, start PSN, rkey, buffer VA"],
+          ["Path", "One spine, chosen by the 5-tuple hash"]] },
+    { t: "2. QP connect", w: "0 frames", flows: [],
+      s: "Each rank moves 2 RC queue pairs (one per channel) INIT → RTR → RTS using the peer's QPN, PSN and GID. RoCE needs no wire handshake for this, so the capture is silent. 256 receive WQEs are pre-posted to absorb the immediates.",
+      f: [["RTR address vector", "GlobalRoute dgid = peer GID, traffic_class 0x6a"],
+          ["Path MTU", "IBV_MTU_4096 (4096 B payload per frame)"],
+          ["Channels", "QPN 0x22 / 0x23 on rank 1, each its own UDP source port"]] },
+    { t: "3. Reduce-scatter", w: "514 frames per stripe", flows: writes,
+      s: "The 8.4 MB gradient is split in halves; rank 0 owns half 0, rank 1 owns half 1. Each rank RDMA-WRITEs the half it does not own into the peer's rcv buffer, striped across both QPs. Both directions run at once, and the two QPs hash onto different spines.",
+      f: [["Stripe", "2,101,252 B = 1 WRITE First + 512 Middle + 1 Last-with-Immediate"],
+          ["First frame (t=1.934449)", "sport 50376, opcode 6, destQP 0x000022, PSN 7415109, RETH dmalen 2101252"],
+          ["Second QP (t=1.934539)", "sport 50447, opcode 6, destQP 0x000023, PSN 691456"],
+          ["Completion", "Immediate data consumes a pre-posted recv WQE, so the receiver learns the stripe landed"]] },
+    { t: "4. Local reduce", w: "0 frames", flows: [],
+      s: "When both stripes' immediates have arrived, each rank adds the received half into its own half on the CPU. Rank 0 now holds the full sum of half 0, rank 1 the full sum of half 1.",
+      f: [["Operation", "buf[own] += rcv[own] (FP32)"],
+          ["Cost", "Part of compute; the step is about 20 ms compute vs about 1.1 s AllReduce"]] },
+    { t: "5. All-gather", w: "514 frames per stripe", flows: writes,
+      s: "Each rank WRITEs its reduced half straight into the peer's gradient buffer, using the same two QPs and the same frame pattern. Both ranks then divide by world size 2 and copy the averaged gradient back into the model.",
+      f: [["Proof", "synced_grad_checksum identical on both ranks at every step (step 0: -194.0036913864)"],
+          ["Result", "final model_checksum=14.4236342852 on both ranks"]] },
+    { t: "6. ACK and loss", w: "7,589 ACK frames", flows: [[S1R, "ack"], [S2R, "ack"]],
+      s: "The responder returns RC ACKs (opcode 17, 62 B) for the AckReq frames. When leaf ingress drops a frame, the next PSN is out of sequence, the responder NAKs, and the requester resends everything from the gap (go-back-N). No PFC, so loss multiplies wire bytes.",
+      f: [["Drop point", "leaf1 / leaf2 ethernet-1/10 in-discarded-packets: +38,402 / +36,270 during Experiment B"],
+          ["rxe_w1 counters", "duplicate_request +2,333 · out_of_seq_request +771 · rcvd_seq_err +743"],
+          ["Never fatal", "retry_exceeded_err 0"]] },
+  ];
+  const COLOR = { qpA: "var(--qpa)", qpB: "var(--qpb)", ack: "var(--text2)", tcp: "var(--text3)" };
+
+  const topo = document.getElementById("topo");
+  function drawTopo(ph) {
+    topo.innerHTML = "";
+    for (const [a, b, label] of E) {
+      const [x1, y1] = N[a], [x2, y2] = N[b];
+      el("line", { x1, y1, x2, y2, stroke: "var(--stroke)", "stroke-width": 1.5 }, topo);
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const isLeaf = a.startsWith("leaf");
+      txt(topo, isLeaf ? mx + 8 : mx + (x1 < x2 ? 18 : -18), my + (isLeaf ? 4 : -4), label,
+        { "font-size": 10, fill: "var(--text3)", "text-anchor": isLeaf ? "start" : "middle" });
+    }
+    ph.flows.forEach(([hops, kind], fi) => {
+      const o = (fi - (ph.flows.length - 1) / 2) * 5;
+      for (let i = 0; i < hops.length - 1; i++) {
+        const [x1, y1] = N[hops[i]], [x2, y2] = N[hops[i + 1]];
+        const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+        const nx = (-(y2 - y1) / len) * o, ny = ((x2 - x1) / len) * o;
+        const attrs = { x1: x1 + nx, y1: y1 + ny, x2: x2 + nx, y2: y2 + ny, stroke: COLOR[kind], "stroke-width": 2.5, opacity: 0.9 };
+        if (kind === "ack" || kind === "tcp") attrs["stroke-dasharray"] = "5 4";
+        el("line", attrs, topo);
+      }
+    });
+    for (const id of Object.keys(N)) {
+      const [x, y, label, sub] = N[id];
+      const w = id.startsWith("worker") ? 150 : 110;
+      el("rect", { x: x - w / 2, y: y - 17, width: w, height: 34, rx: 6, fill: "var(--elev)", stroke: "var(--stroke)" }, topo);
+      txt(topo, x, y - 2, label, { "font-size": 12, "font-weight": 600, fill: "var(--text)", "text-anchor": "middle" });
+      txt(topo, x, y + 11, sub, { "font-size": 9.5, fill: "var(--text3)", "text-anchor": "middle" });
+    }
+  }
+  function pills(container, items, onPick, initial) {
+    const btns = items.map((label, i) => {
+      const b = document.createElement("button");
+      b.className = "pill"; b.textContent = label;
+      b.onclick = () => { btns.forEach((x) => x.classList.remove("on")); b.classList.add("on"); onPick(i); };
+      container.appendChild(b);
+      return b;
+    });
+    btns[initial].click();
+  }
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  pills(document.getElementById("phase-pills"), PHASES.map((p) => p.t), (i) => {
+    const p = PHASES[i];
+    document.getElementById("ph-title").textContent = p.t;
+    document.getElementById("ph-wire").textContent = p.w;
+    document.getElementById("ph-summary").textContent = p.s;
+    document.getElementById("ph-fields").innerHTML = p.f.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
+    drawTopo(p);
+  }, 2);
+
+  // ---------- frame anatomy ----------
+  const ETH = ["Eth", 14, "Ethertype 0x0800. Captured on worker1 eth1, so no 802.1Q tag"];
+  const IP = ["IPv4", 20, "DSCP 26, ECN 10 (ECT(0)) from traffic_class 0x6a. TTL 64 leaving worker1, 61 arriving from worker2. Protocol 17"];
+  const UDP = ["UDP", 8, "dport 4791 (RoCEv2). sport is per QP (50376, 50447), which is the ECMP entropy"];
+  const BTH = ["BTH", 12, "Opcode, P_Key 0xffff, destination QP (24 bit), PSN (24 bit), AckReq bit"];
+  const RETH = ["RETH", 16, "Remote VA, rkey and DMA length 2,101,252 B for the whole stripe"];
+  const IMM = ["ImmDt", 4, "32-bit immediate; consumes a receive WQE and generates a completion"];
+  const AETH = ["AETH", 4, "Syndrome (ACK or NAK with reason) and message sequence number"];
+  const ICRC = ["ICRC", 4, "Invariant CRC computed by rxe over the fields that do not change hop by hop"];
+  const FRAMES = [
+    ["WRITE First", 6, 4170, [ETH, IP, UDP, BTH, RETH, ["Payload", 4096, "First 4096 B of the stripe"], ICRC], "182 frames", "captured (ideal 160)"],
+    ["WRITE Middle", 7, 4154, [ETH, IP, UDP, BTH, ["Payload", 4096, "Next 4096 B; address implied by PSN order"], ICRC], "202,165 frames", "captured (ideal 81,920)"],
+    ["WRITE Last w/ Imm", 9, 66, [ETH, IP, UDP, BTH, IMM, ["Payload", 4, "2,101,252 = 513 x 4096 + 4, so the tail is 4 B"], ICRC], "375 frames", "captured (ideal 160)"],
+    ["WRITE Only w/ Imm", 11, 82, [ETH, IP, UDP, BTH, RETH, IMM, ["Payload", 4, "One FP32 scalar (Experiment A)"], ICRC], "8 frames", "captured in Experiment A"],
+    ["Acknowledge", 17, 62, [ETH, IP, UDP, BTH, AETH, ICRC], "7,589 frames", "captured"],
+  ];
+  const frameEl = document.getElementById("frame");
+  let segSel = "BTH";
+  function drawFrame(fr) {
+    const [, , total, segs, cap, capL] = fr;
+    document.getElementById("fr-total").textContent = total + " B";
+    document.getElementById("fr-cap").textContent = cap;
+    document.getElementById("fr-cap-l").textContent = capL;
+    if (!segs.some((s) => s[0] === segSel)) segSel = segs[0][0];
+    frameEl.innerHTML = "";
+    for (const [name, bytes, note] of segs) {
+      const d = document.createElement("div");
+      d.className = "seg" + (name === "Payload" ? (bytes > 100 ? " payload" : " small") : "") + (name === segSel ? " on" : "");
+      d.innerHTML = `<b>${name}</b><i>${bytes} B</i>`;
+      d.onclick = () => { segSel = name; drawFrame(fr); };
+      frameEl.appendChild(d);
+      if (name === segSel) {
+        document.getElementById("seg-name").textContent = `${name} · ${bytes} B`;
+        document.getElementById("seg-note").textContent = note;
+      }
+    }
+  }
+  pills(document.getElementById("frame-pills"), FRAMES.map((f) => `${f[0]} · ${f[1]}`), (i) => drawFrame(FRAMES[i]), 1);
+
+  // ---------- charts ----------
+  function axes(svg, W, H, m, yMax, ticks = 4) {
+    const g = el("g", {}, svg);
+    for (let i = 0; i <= ticks; i++) {
+      const v = (yMax * i) / ticks;
+      const y = H - m.b - ((H - m.t - m.b) * i) / ticks;
+      el("line", { x1: m.l, x2: W - m.r, y1: y, y2: y, stroke: "var(--stroke2)" }, g);
+      txt(g, m.l - 6, y + 4, fmt(v), { "font-size": 10, fill: "var(--text3)", "text-anchor": "end" });
+    }
+  }
+  function niceMax(v) {
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const k of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (k * p >= v) return k * p;
+    return v;
+  }
+  function legend(svg, W, series) {
+    let x = W - 8;
+    [...series].reverse().forEach((s) => {
+      const t = txt(svg, x, 12, s.name, { "font-size": 11, fill: "var(--text2)", "text-anchor": "end" });
+      const w = s.name.length * 6.2;
+      el("rect", { x: x - w - 14, y: 4, width: 9, height: 9, rx: 2, fill: s.color }, svg);
+      x -= w + 26;
+    });
+  }
+  function lineChart(id, cats, series, { suffix = "", ref, every = 1 } = {}) {
+    const svg = document.getElementById(id);
+    const W = 560, H = 240, m = { l: 48, r: 12, t: 24, b: 28 };
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const all = series.flatMap((s) => s.data).concat(ref ? [ref.v] : []);
+    const yMax = niceMax(Math.max(...all));
+    axes(svg, W, H, m, yMax);
+    const X = (i) => m.l + ((W - m.l - m.r) * i) / (cats.length - 1);
+    const Y = (v) => H - m.b - ((H - m.t - m.b) * v) / yMax;
+    cats.forEach((c, i) => { if (i % every === 0) txt(svg, X(i), H - 10, c, { "font-size": 10, fill: "var(--text3)", "text-anchor": "middle" }); });
+    if (ref) {
+      el("line", { x1: m.l, x2: W - m.r, y1: Y(ref.v), y2: Y(ref.v), stroke: "var(--text3)", "stroke-dasharray": "4 4" }, svg);
+      txt(svg, W - m.r - 4, Y(ref.v) - 5, ref.label, { "font-size": 10, fill: "var(--text3)", "text-anchor": "end" });
+    }
+    series.forEach((s) => {
+      const pts = s.data.map((v, i) => `${X(i)},${Y(v)}`).join(" ");
+      if (s.fill) el("polygon", { points: `${X(0)},${Y(0)} ${pts} ${X(s.data.length - 1)},${Y(0)}`, fill: s.color, opacity: 0.12 }, svg);
+      el("polyline", { points: pts, fill: "none", stroke: s.color, "stroke-width": 2 }, svg);
+      s.data.forEach((v, i) => el("circle", { cx: X(i), cy: Y(v), r: cats.length > 30 ? 1.8 : 2.8, fill: s.color }, svg));
+    });
+    if (series.length > 1) legend(svg, W, series);
+    const step = (W - m.l - m.r) / (cats.length - 1);
+    cats.forEach((c, i) => {
+      const r = el("rect", { x: X(i) - step / 2, y: m.t, width: step, height: H - m.t - m.b, fill: "transparent" }, svg);
+      r.addEventListener("mousemove", (ev) => showTip(ev, `<b>${c}</b><br>` + series.map((s) => `${s.name}: ${fmt(s.data[i])}${suffix}`).join("<br>")));
+      r.addEventListener("mouseleave", hideTip);
+    });
+  }
+  function barChart(id, cats, series, { suffix = "", ref, values = true } = {}) {
+    const svg = document.getElementById(id);
+    const W = 560, H = 220, m = { l: 56, r: 12, t: 24, b: 28 };
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const all = series.flatMap((s) => s.data).concat(ref ? [ref.v] : []);
+    const yMax = niceMax(Math.max(...all) * 1.08);
+    axes(svg, W, H, m, yMax);
+    const Y = (v) => H - m.b - ((H - m.t - m.b) * v) / yMax;
+    const band = (W - m.l - m.r) / cats.length;
+    const bw = Math.min(70, (band * 0.6) / series.length);
+    cats.forEach((c, i) => {
+      const cx = m.l + band * i + band / 2;
+      txt(svg, cx, H - 10, c, { "font-size": 11, fill: "var(--text2)", "text-anchor": "middle" });
+      series.forEach((s, si) => {
+        const x = cx - (bw * series.length) / 2 + bw * si;
+        const v = s.data[i];
+        const r = el("rect", { x: x + 2, y: Y(v), width: bw - 4, height: Math.max(0.5, Y(0) - Y(v)), rx: 2, fill: s.color }, svg);
+        r.addEventListener("mousemove", (ev) => showTip(ev, `<b>${c}</b><br>${s.name}: ${fmt(v)}${suffix}`));
+        r.addEventListener("mouseleave", hideTip);
+        if (values) txt(svg, x + bw / 2, Y(v) - 5, fmt(v) + suffix, { "font-size": 10.5, fill: "var(--text2)", "text-anchor": "middle" });
+      });
+    });
+    if (ref) {
+      el("line", { x1: m.l, x2: W - m.r, y1: Y(ref.v), y2: Y(ref.v), stroke: "var(--ok)", "stroke-dasharray": "4 4" }, svg);
+      txt(svg, W - m.r - 4, Y(ref.v) - 5, ref.label, { "font-size": 10.5, fill: "var(--ok)", "text-anchor": "end" });
+    }
+    if (series.length > 1) legend(svg, W, series);
+  }
+
+  const IO_BYTES = [3942830, 20452332, 20172142, 9783964, 20174718, 14004972, 20689438, 16950764, 10062184, 19424594, 23071214,
+    13899602, 17939618, 13674072, 19588208, 12442760, 17145592, 10182176, 19889816, 22410760, 18097612, 17372724,
+    13733334, 15838924, 14059258, 16570402, 11694324, 15302452, 20564998, 16007450, 16971154, 14702650, 18836746,
+    16228140, 18403932, 14099578, 22823358, 14152650, 11266560, 21823658, 17400776, 14635796, 23155484, 14236962,
+    15960634, 20630348, 9223748, 19046244, 18335182, 17449182, 16521602];
+  const IO_T = IO_BYTES.map((_, i) => (1.5 + i * 0.5).toFixed(1));
+  lineChart("ch-io", IO_T, [{ name: "RoCEv2 MB per 0.5 s", data: IO_BYTES.map((b) => b / 1e6), color: "var(--qpa)", fill: true }],
+    { suffix: " MB", every: 6 });
+
+  const COMPUTE = [13.5, 27.7, 21.3, 14.1, 13.7, 16.7, 14.8, 14.7, 14.1, 14.7, 13.8, 23.3, 22.3, 13.5, 19.3, 23.3, 17.1, 18.0, 15.8, 16.1];
+  const ALLRED = [1337.7, 1108.8, 1466.0, 1273.2, 1098.9, 1300.8, 1149.6, 1037.8, 1606.3, 1102.4, 1225.4, 1382.4, 1043.7, 942.5, 1252.4, 1149.2, 1130.8, 1349.6, 1085.1, 1087.2];
+  lineChart("ch-expb", COMPUTE.map((_, i) => String(i)),
+    [{ name: "allreduce_ms", data: ALLRED, color: "var(--warn)" }, { name: "compute_ms", data: COMPUTE, color: "var(--qpa)" }],
+    { suffix: " ms", every: 2 });
+
+  const FAIL = [800.8, 802.3, 805.6, 773.8, 780.3, 771.9, 820.3, 821.0, 834.3, 805.0, 828.0, 783.0, 816.6, 2965.3, 852.1, 833.2,
+    829.9, 804.7, 786.5, 806.5, 804.0, 865.9, 795.7, 910.8, 769.4, 810.6, 846.5, 772.7, 863.4, 886.8, 848.4, 812.0,
+    786.2, 957.2, 835.6, 775.0, 835.6, 806.4, 797.6, 836.3];
+  lineChart("ch-fail", FAIL.map((_, i) => String(i)), [{ name: "allreduce_ms", data: FAIL, color: "var(--qpa)" }],
+    { suffix: " ms", every: 4, ref: { v: 815, label: "steady ~815 ms" } });
+
+  barChart("ch-sent", ["worker1 (rank 0)", "worker2 (rank 1)"], [{ name: "MB sent", data: [513, 325], color: "var(--qpa)" }],
+    { suffix: " MB", ref: { v: 168, label: "ideal 168 MB" } });
+  barChart("ch-ecmp", ["from leaf1", "from leaf2"],
+    [{ name: "spine1", data: [168.4, 168.1], color: "var(--qpa)" }, { name: "spine2", data: [173.0, 167.2], color: "var(--qpb)" }],
+    { suffix: " MB" });
+  barChart("ch-pace", ["unpaced", "100 Mbit/s", "60 Mbit/s"], [{ name: "allreduce_ms", data: [1656, 805, 1386], color: "var(--qpa)" }],
+    { suffix: " ms" });
+  barChart("ch-disc", ["unpaced", "100 Mbit/s", "60 Mbit/s"], [{ name: "discards", data: [106565, 7, 15], color: "var(--warn)" }]);
+})();
+</script>
+</body>
+</html>

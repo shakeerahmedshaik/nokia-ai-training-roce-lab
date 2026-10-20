@@ -1,0 +1,15 @@
+## loopback rxe_w1 -> rxe_w1 (no fabric), 1 MiB writes, RoCE MTU 4096
+ GID index       : 1
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:10:01:02
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:10:01:02
+ #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]
+ 1048576    200              0.78               0.77   		     0.000092
+
+## worker1 -> worker2 across leaf1/spine/leaf2, 1 MiB writes, RoCE MTU 4096
+ GID index       : 1
+ local address: LID 0000 QPN 0x004a PSN 0xffe968 RKey 0x0050ce VAddr 0x007fc039d64000
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:10:01:02
+ remote address: LID 0000 QPN 0x0046 PSN 0x425a41 RKey 0x004c36 VAddr 0x007fe7e98e6000
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:10:02:02
+ #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]
+ 1048576    30           0.104152            0.055661            0.000007

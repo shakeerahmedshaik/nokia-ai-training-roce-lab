@@ -1,0 +1,8 @@
+    dscp 26 {
+        forwarding-class fc3
+        drop-probability low
+    }
+    dscp 48 {
+        forwarding-class fc6
+        drop-probability low
+    }

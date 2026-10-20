@@ -1,0 +1,4 @@
+worker1 rxe_w1 sent_pkts 683480 rcvd_pkts 278391 duplicate_request 7286 out_of_seq_request 625 rcvd_seq_err 773 retry_exceeded_err 0 completer_retry_err 2148 
+worker2 rxe_w2 sent_pkts 266148 rcvd_pkts 436547 duplicate_request 7964 out_of_seq_request 793 rcvd_seq_err 585 retry_exceeded_err 0 completer_retry_err 816 
+leaf1 ethernet-1/10 in-discarded-packets=65596 in-error-packets=11524 
+leaf2 ethernet-1/10 in-discarded-packets=27922 in-error-packets=9841 

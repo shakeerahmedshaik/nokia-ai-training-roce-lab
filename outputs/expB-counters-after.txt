@@ -1,0 +1,4 @@
+spine1  ethernet-1/1  in-packets=387284 in-octets=577286507 out-packets=48771 out-octets=173357663 
+spine1  ethernet-1/2  in-packets=51062 in-octets=173356589 out-packets=384874 out-octets=577286177 
+spine2  ethernet-1/1  in-packets=142609 in-octets=278113908 out-packets=264409 out-octets=394671087 
+spine2  ethernet-1/2  in-packets=266457 in-octets=394671004 out-packets=140769 out-octets=278114298 
