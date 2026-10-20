@@ -22,11 +22,10 @@ The lab then measures what an AI fabric engineer cares about: wire bytes compare
 bytes, per-QP ECMP placement, loss and go-back-N retransmission, the effect of sender pacing, and
 a spine-link failure in the middle of training.
 
-An interactive walkthrough of one training step on the wire is in [`docs/index.html`](docs/index.html). It
-covers each AllReduce phase on the Clos diagram, per-opcode frame anatomy and the capture charts, using
-the data in [`outputs/`](outputs). It is a single self-contained page: enable GitHub Pages for this
-repository with source **Deploy from a branch**, branch `main`, folder `/docs`, and it is served at
-`https://<user>.github.io/<repo>/`. Locally, run `python3 -m http.server -d docs` and open
+**[Interactive walkthrough](https://shakeerahmedshaik.github.io/nokia-ai-training-roce-lab/)** of one
+training step on the wire: each AllReduce phase on the Clos diagram, per-opcode frame anatomy and the
+capture charts, using the data in [`outputs/`](outputs). The page is [`docs/index.html`](docs/index.html),
+served by GitHub Pages from `main:/docs`. Locally, run `python3 -m http.server -d docs` and open
 `http://localhost:8000`.
 
 ## Topology
